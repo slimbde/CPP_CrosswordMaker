@@ -6,16 +6,17 @@ using namespace System::Diagnostics;
 
 int main(array<System::String ^> ^args)
 {
-	// создаем список слов
+	// СЃРѕР·РґР°РµРј СЃРїРёСЃРѕРє СЃР»РѕРІ
 	List<String^ >^ words = gcnew List<String^ >();
 
-	// создаем экземпляр составителя кроссвордов
+	// СЃРѕР·РґР°РµРј СЌРєР·РµРјРїР»СЏСЂ СЃРѕСЃС‚Р°РІРёС‚РµР»СЏ РєСЂРѕСЃСЃРІРѕСЂРґРѕРІ
 	Maker^ mkr = gcnew Maker();
 
 	ConsoleKeyInfo^ key;
 	do
 	{
 		Console::Clear();
+		Console::WriteLine(".:: Crossword Maker. Coded by slimbde 2019 ::.");
 		Console::WriteLine("Write words separated by a space");
 		String^ input = Console::ReadLine();
 		words = gcnew List<String^ >((input->Split(' ')));
