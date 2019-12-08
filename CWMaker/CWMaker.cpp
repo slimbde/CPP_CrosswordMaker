@@ -4,6 +4,9 @@ using namespace System::Collections::Generic;
 using namespace System::Diagnostics;
 
 
+
+
+
 int main(array<System::String ^> ^args)
 {
 	// создаем список слов
@@ -20,14 +23,21 @@ int main(array<System::String ^> ^args)
 		Console::WriteLine("Write words separated by a space");
 		String^ input = Console::ReadLine();
 		words = gcnew List<String^ >((input->Split(' ')));
+		array<String^ >^ wordsArray = words->ToArray();
+
 
 		auto watch = Stopwatch::StartNew();
+		List<String^ >^ lst = gcnew List<String^ >(words);
 		mkr->Handle(words);
 		watch->Stop();
 		Console::WriteLine("Calculation has been done in {0} ms", watch->ElapsedMilliseconds);
 
 		mkr->ShowBoard();
-		Console::WriteLine("To exit program press \"Escape\"\nTo resume making attempts press any key");
+		//mkr->ShowFramework();
+		mkr->ShowWordsList();
+
+
+		Console::WriteLine("To resume making attempts press any key\nTo exit program press \"Escape\"");
 		key = Console::ReadKey();
 		Console::WriteLine();
 	}

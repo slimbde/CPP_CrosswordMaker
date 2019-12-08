@@ -5,6 +5,10 @@ VisualStudioVersion = 15.0.28307.645
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CWMaker", "CWMaker\CWMaker.vcxproj", "{A850F2A6-CCBD-46CB-BDEF-F1D1B5BADF92}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Cli_CWMaker", "Cli_CWMaker\Cli_CWMaker.vcxproj", "{56A6901B-95B2-47BD-BC6C-7018B83911AA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "test\test.vcxproj", "{DF397194-D10F-4A6A-AFAB-F9F9AE1B2DFE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +25,22 @@ Global
 		{A850F2A6-CCBD-46CB-BDEF-F1D1B5BADF92}.Release|x64.Build.0 = Release|x64
 		{A850F2A6-CCBD-46CB-BDEF-F1D1B5BADF92}.Release|x86.ActiveCfg = Release|Win32
 		{A850F2A6-CCBD-46CB-BDEF-F1D1B5BADF92}.Release|x86.Build.0 = Release|Win32
+		{56A6901B-95B2-47BD-BC6C-7018B83911AA}.Debug|x64.ActiveCfg = Debug|x64
+		{56A6901B-95B2-47BD-BC6C-7018B83911AA}.Debug|x64.Build.0 = Debug|x64
+		{56A6901B-95B2-47BD-BC6C-7018B83911AA}.Debug|x86.ActiveCfg = Debug|Win32
+		{56A6901B-95B2-47BD-BC6C-7018B83911AA}.Debug|x86.Build.0 = Debug|Win32
+		{56A6901B-95B2-47BD-BC6C-7018B83911AA}.Release|x64.ActiveCfg = Release|x64
+		{56A6901B-95B2-47BD-BC6C-7018B83911AA}.Release|x64.Build.0 = Release|x64
+		{56A6901B-95B2-47BD-BC6C-7018B83911AA}.Release|x86.ActiveCfg = Release|Win32
+		{56A6901B-95B2-47BD-BC6C-7018B83911AA}.Release|x86.Build.0 = Release|Win32
+		{DF397194-D10F-4A6A-AFAB-F9F9AE1B2DFE}.Debug|x64.ActiveCfg = Debug|x64
+		{DF397194-D10F-4A6A-AFAB-F9F9AE1B2DFE}.Debug|x64.Build.0 = Debug|x64
+		{DF397194-D10F-4A6A-AFAB-F9F9AE1B2DFE}.Debug|x86.ActiveCfg = Debug|Win32
+		{DF397194-D10F-4A6A-AFAB-F9F9AE1B2DFE}.Debug|x86.Build.0 = Debug|Win32
+		{DF397194-D10F-4A6A-AFAB-F9F9AE1B2DFE}.Release|x64.ActiveCfg = Release|x64
+		{DF397194-D10F-4A6A-AFAB-F9F9AE1B2DFE}.Release|x64.Build.0 = Release|x64
+		{DF397194-D10F-4A6A-AFAB-F9F9AE1B2DFE}.Release|x86.ActiveCfg = Release|Win32
+		{DF397194-D10F-4A6A-AFAB-F9F9AE1B2DFE}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

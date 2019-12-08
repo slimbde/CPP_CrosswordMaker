@@ -2,118 +2,158 @@
 #include "Board.h"
 #include "CompareByLength.h"
 using namespace System;
-using namespace System::Collections::Generic;
+using namespace System::Collections;
 
 
 
 ref class Maker
 {
-	Stack<Board^ >^ states;
-	Stack<String^ >^ wrds;
+    Generic::Stack<Board^ >^ states;		// СЃС‚РµРє СЃРѕСЃС‚РѕСЏРЅРёР№
+    Generic::Stack<String^ >^ wrds;			// СЃС‚РµРє РґР»СЏ РІСЃС‚Р°РІР»СЏРµРјС‹С… СЃР»РѕРІ
+    Generic::Stack<String^ >^ failedWords;	// СЃС‚РµРє РґР»СЏ РЅРµ РІСЃС‚Р°РІР»РµРЅРЅС‹С… СЃР»РѕРІ
+    int wordsCount;
 
 public:
-	virtual ~Maker();
-	Maker();
+    virtual ~Maker();
+    Maker();
 
-	bool Handle(IEnumerable<String^ >^ words);
-	void ShowBoard();
+    bool			Handle(List<String^ >^ words);
+    void			ShowWordsList();
+    void			ShowBoard();
+    void			ShowFramework();
+    List<Board^>^ gimmeStates();
+    List<String^>^ gimmeFails();
 };
 
 
 
 inline Maker::~Maker()
-{
-}
+{ }
 inline Maker::Maker()
 {
-	states = gcnew Stack<Board^ >();
+    states = gcnew Generic::Stack<Board^ >();
+    failedWords = gcnew Generic::Stack<String^ >();
 }
 
-inline bool Maker::Handle(IEnumerable<String^ >^ words)
+inline bool Maker::Handle(List<String^ >^ words)
 {
-	Console::WriteLine("\nStarted handling words");
+    Console::WriteLine("\nStarted handling words at " + DateTime::Now);
 
-	// сортируем по длине слова
-	((List<String^>^)words)->Sort(gcnew CompareByLength());
-	// перегоним слова в стек
-	wrds = gcnew Stack<String^>(words);
+    // СЃРѕСЂС‚РёСЂСѓРµРј РїРѕ РґР»РёРЅРµ СЃР»РѕРІР°
+    words->Sort(gcnew CompareByLength());
+    // РїРµСЂРµРіРѕРЅРёРј СЃР»РѕРІР° РІ СЃС‚РµРє
+    wrds = gcnew Generic::Stack<String^>(words);
+    wordsCount = wrds->Count;
 
-	// создаем резервный стек для предыдущего состояния в случае неудачи
-	Stack<Board^ >^ reserve;
+    // СЃРѕР·РґР°РµРј СЂРµР·РµСЂРІРЅС‹Р№ СЃС‚РµРє РґР»СЏ РїСЂРµРґС‹РґСѓС‰РµРіРѕ СЃРѕСЃС‚РѕСЏРЅРёСЏ РІ СЃР»СѓС‡Р°Рµ РЅРµСѓРґР°С‡Рё
+    Generic::Stack<Board^ >^ reserve;
 
-	// создаем поле высотой в самое длинное слово и шириной равной второму по длине
-	states->Push(gcnew Board(wrds->Peek()->Length, 1));
+    // СЃРѕР·РґР°РµРј РїРѕР»Рµ РІС‹СЃРѕС‚РѕР№ РІ СЃР°РјРѕРµ РґР»РёРЅРЅРѕРµ СЃР»РѕРІРѕ
+    states->Push(gcnew Board(wrds->Peek()->Length, 1));
 
-	// разместим слова на доске
-	while(wrds->Count)
-	{
-		// флаг успешного получения результатов
-		bool success;
+    // РїРѕРєР° РІ СЃС‚РµРєРµ СЃР»РѕРІ РµСЃС‚СЊ СЃР»РѕРІР°
+    while(wrds->Count)
+    {
+        // РєСЂСѓС‚РёРјСЃСЏ РїРѕРєР° РµСЃС‚СЊ СЃРѕСЃС‚РѕСЏРЅРёСЏ РІ СЃС‚РµРєРµ
+        do
+        {
+            // РґРѕСЃС‚Р°РµРј РёР· СЃС‚РµРєР° РїРѕСЃР»РµРґРЅРµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ
+            Board^ lastState = states->Pop();
 
-		do
-		{
-			// установим флаг success в true
-			success = true;
+            // РІСЂРµРјРµРЅРЅС‹Р№ СЃС‚РµРє РґР»СЏ С…СЂР°РЅРµРЅРёСЏ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РґРѕР±Р°РІР»РµРЅРёСЏ РѕРґРЅРѕРіРѕ СЃР»РѕРІР°
+            Generic::Stack<Board^ >^ results = gcnew Generic::Stack<Board^ >();
 
-			// если стек состояний не пуст
-			while(states->Count)
-			{
-				// достаем из стека последнее состояние
-				Board^ lastBoard = states->Pop();
+            // РїРѕР»СѓС‡РёРј СЃС‚РµРє СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РґРѕР±Р°РІР»РµРЅРёСЏ СЃР»РѕРІР° Рє СЌС‚РѕРјСѓ СЃРѕСЃС‚РѕСЏРЅРёСЋ
+            // РІР·РіР»СЏРЅРµРј РЅР° РІРµСЂС…РЅРµРµ СЃР»РѕРІРѕ РІ СЃС‚РµРєРµ РїРѕРєР° РµРіРѕ РЅРµ СЃРЅРёРјР°СЏ
+            results = lastState->Alter(wrds->Peek());
 
-				// временный стек для хранения результатов добавления одного слова
-				Stack<Board^ >^ results = gcnew Stack<Board^ >();
+            // РµСЃР»Рё РїРѕР»СѓС‡РёР»РѕСЃСЊ Рё СЂРµР·СѓР»СЊС‚Р°С‚ РЅРµ РїСѓСЃС‚РѕР№
+            if(results->Count != 0)
+            {
+                // СЃРЅРёРјРµРј СЃР»РѕРІРѕ СЃРѕ СЃС‚РµРєР° СЃР»РѕРІ
+                wrds->Pop();
+                // Р° РµСЃР»Рё РІ СЃС‚РµРєРµ РЅРµ РІСЃС‚Р°РІР»РµРЅРЅС‹С… СЃР»РѕРІ С‡С‚Рѕ-С‚Рѕ РµСЃС‚СЊ, РґРѕСЃС‚Р°РµРј
+                // С‡С‚РѕР±С‹ РїРѕРїСЂРѕР±РѕРІР°С‚СЊ РµС‰Рµ СЂР°Р· РІСЃС‚Р°РІРёС‚СЊ
+                if(failedWords->Count)
+                    wrds->Push(failedWords->Pop());
 
-				// получим стек результатов добавления слова к этому состоянию
-				// взглянем на верхнее слово в стеке пока его не снимая
-				results = lastBoard->Alter(wrds->Peek());
+                // РѕС‡РёС‰Р°РµРј СЃС‚РµРє СЃРѕСЃС‚РѕСЏРЅРёР№
+                states->Clear();
+                // РїР°РєСѓРµРј СЂРµР·СѓР»СЊС‚Р°С‚С‹ РІ СЃС‚РµРє СЃРѕСЃС‚РѕСЏРЅРёР№
+                states = gcnew Generic::Stack<Board^ >(results);
 
-				// если получилось и результат не пустой
-				if(results->Count != 0)
-				{
-					// если у нас получилось вставить слово - снимем его со стека слов
-					wrds->Pop();
+                // РїР°РєСѓРµРј СЂРµР·СѓР»СЊС‚Р°С‚С‹ РІ СЂРµР·РµСЂРІРЅС‹Р№ РјР°СЃСЃРёРІ
+                reserve = gcnew Generic::Stack<Board^ >(results);
 
-					// очищаем стек состояний
-					states->Clear();
-					// пакуем результаты в стек состояний
-					states = gcnew Stack<Board^ >(results);
+                // РІС‹С…РѕРґРёРј РёР· РєР°СЂСѓСЃРµР»РµР№ СЃРѕСЃС‚РѕСЏРЅРёР№ Рє СЃР»РµРґСѓСЋС‰РµРјСѓ СЃР»РѕРІСѓ
+                break;
+            }
+        }
+        while(states->Count);
 
-					// пакуем результаты в резервный массив
-					reserve = gcnew Stack<Board^ >(states);
+        // РµСЃР»Рё РЅРµ РѕСЃС‚Р°Р»РѕСЃСЊ СЃРѕСЃС‚РѕСЏРЅРёР№
+        if(!states->Count)
+        {
+            // РЅРѕ СЃС‚РµРє СЃР»РѕРІ РµС‰Рµ РЅРµ РїСѓСЃС‚
+            if(wrds->Count)
+            {
+                // РїСЂРёСЃРІР°РёРІР°РµРј РїСЂРѕС€Р»С‹Рµ СЃРѕСЃС‚РѕСЏРЅРёСЏ РёР· СЂРµР·РµСЂРІРЅРѕРіРѕ СЃС‚РµРєР°
+                states = gcnew Generic::Stack<Board^ >(reserve);
+                // СЃРѕС…СЂР°РЅСЏРµРј С‚РµРєСѓС‰РµРµ СЃР»РѕРІРѕ С‡С‚РѕР±С‹ РїРѕРїСЂРѕР±РѕРІР°С‚СЊ РІСЃС‚Р°РІРёС‚СЊ РґСЂСѓРіРёРµ
+                failedWords->Push(wrds->Pop());
+            }
+            else
+                return false;
+        }
+    }
 
-					// и т.к. success по прежнему в true - выходим из цикла
-					break;
-				}
-				else
-				{
-					// если не получилось вставить слово, то вернемся и достанем
-					// следующее состояние и попробуем туда вставить это слово
-					success = false;
-					break;
-				}
-			}
+    return true;
+}
+inline void Maker::ShowWordsList()
+{
+    if(!states->Count)
+    {
+        Console::WriteLine("There is nothing to give back. Gimme some words first.");
+        return;
+    }
 
-			// если мы не можем упаковать слово никаким способом, то вернем предыдущие
-			if(!states->Count)
-			{
-				states = gcnew Stack<Board^ >(reserve);
-				Console::WriteLine("Cannot handle all of words, but");
-				return false;
-			}
-		}
-		while(!success);
-	}
+    Console::WriteLine("Words to guess:");
 
-	return true;
+    Generic::Stack<Word^ >^ tmp = gcnew Generic::Stack<Word^ >(states->Peek()->GetWords());
+    Generic::Stack<Word^ >^ wrds = gcnew Generic::Stack<Word^ >();
+    while(tmp->Count)
+        wrds->Push(tmp->Pop());
+
+    int number = 1;
+    while(wrds->Count)
+        Console::WriteLine("{0}. {1}", (number++).ToString(), wrds->Pop()->word);
+    Console::WriteLine();
 }
 inline void Maker::ShowBoard()
 {
-	Console::WriteLine("Found {0} solutions:", states->Count);
-	while(states->Count)
-		states->Pop()->Show();
-	Console::WriteLine("There are {0} words left: ", wrds->Count);
-	while(wrds->Count)
-		Console::WriteLine(wrds->Pop());
-	Console::WriteLine();
+    Console::WriteLine("Handled {0} words\nFound {1} solutions:", wordsCount, states->Count);
+    Generic::Stack<Board^ >^ temp = gcnew Generic::Stack<Board^ >(states);
+
+    while(temp->Count)
+        temp->Pop()->Show();
+    String^ answer = failedWords->Count > 1 ? "There are " : "There is ";
+    Console::WriteLine(answer + "{0} words left:", failedWords->Count);
+
+    if(failedWords->Count)
+        while(failedWords->Count)
+            Console::WriteLine(failedWords->Pop());
+
+    Console::WriteLine();
+}
+inline void Maker::ShowFramework()
+{
+    states->Peek()->ShowFramework();
+}
+inline List<Board^>^ Maker::gimmeStates()
+{
+    return gcnew List<Board^>(states);
+}
+inline List<String^>^ Maker::gimmeFails()
+{
+    return gcnew List<String^>(failedWords);
 }

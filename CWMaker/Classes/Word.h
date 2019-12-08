@@ -2,45 +2,57 @@
 using namespace System;
 using namespace System::Collections::Generic;
 
-enum Layout
+namespace CWM
 {
-	Vertical,
-	Horizontal
-};
+    enum Layout
+    {
+        Vertical,
+        Horizontal
+    };
+}
 
 
 
 ref class Word
 {
 public:
-	String^ word;
-	Layout layout;
-	int top;
-	int left;
-	int length;
+    String^ word;
+    CWM::Layout layout;
+    int top;
+    int left;
+    int length;
+    property String^ lyt
+    {
+        String^ get()
+        {
+            if((int)layout)
+                return "Horizontal";
+            return "Vertical";
+        };
+    }
 
-	// конструктор слова (intersects - индексы пересечений)
-	Word(String^ word, Layout layout, int top, int left)
-	{
-		this->word = word;
-		this->layout = layout;
-		this->top = top;
-		this->left = left;
-		length = word->Length;
-	}
-	String^ operator[](int index)
-	{
-		if(index < 0 || index >= length)
-			throw gcnew IndexOutOfRangeException();
+    // РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ СЃР»РѕРІР° (intersects - РёРЅРґРµРєСЃС‹ РїРµСЂРµСЃРµС‡РµРЅРёР№)
+    Word(String^ word, CWM::Layout layout, int top, int left)
+    {
+        this->word = word;
+        this->layout = layout;
+        this->top = top;
+        this->left = left;
+        length = word->Length;
+    }
+    String^ operator[](int index)
+    {
+        if(index < 0 || index >= length)
+            throw gcnew IndexOutOfRangeException();
 
-		return word[index].ToString();
-	}
-	Word(Word^ other)
-	{
-		this->word = other->word;
-		this->layout = other->layout;
-		this->top = other->top;
-		this->left = other->left;
-		this->length = this->word->Length;
-	}
+        return word[index].ToString();
+    }
+    Word(Word^ other)
+    {
+        this->word = other->word;
+        this->layout = other->layout;
+        this->top = other->top;
+        this->left = other->left;
+        this->length = this->word->Length;
+    }
 };
