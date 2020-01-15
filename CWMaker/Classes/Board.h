@@ -467,7 +467,7 @@ inline Generic::Stack<Board^ >^ Board::Alter(String^ wrd)
         CollectWord(gcnew Word(wrd, CWM::Layout::Vertical, 0, 0));
 
         // создаем временный стек для результата
-        Generic::Stack<Board^ >^ result = gcnew Generic::Stack<Board^ >();
+        auto result = gcnew Generic::Stack<Board^ >();
         result->Push(this);
 
         return result;
@@ -475,9 +475,9 @@ inline Generic::Stack<Board^ >^ Board::Alter(String^ wrd)
     else // если доска не пуста
     {
         // пробуем вписать слово горизонтально
-        Generic::Stack<Board^ >^ result = InsertHorizontally(wrd);
+        auto result = InsertHorizontally(wrd);
         // пробуем вписать слово вертикально
-        Generic::Stack<Board^ >^ extraResult = InsertVertically(wrd);
+        auto extraResult = InsertVertically(wrd);
 
         // дополняем стек результатов вставки вертикально
         while(extraResult->Count)
