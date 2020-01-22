@@ -53,13 +53,15 @@ public:
 			return result;
 		}
 	}
+	property array<Word^>^ Words {
+		array<Word^>^ get() { return words; }
+	}
+	property array<String^, 2>^ Brd {array<String^, 2>^ get() { return board; } }
 
 	virtual ~Board();
 	Board(int height, int width);
 
 	Generic::Stack<Board^ >^ Alter(String^ wrd);
-	void Draw(Graphics^% easel, bool resetZeroPoint, bool cutWords, float scale);
-
 
 private:
 	bool IsEmpty();
@@ -79,7 +81,7 @@ private:
 
 
 inline Board::~Board()
-{}
+{ }
 inline Board::Board(int height, int width)
 {
 	this->width = width;
@@ -107,68 +109,15 @@ inline Generic::Stack<Board^ >^ Board::Alter(String^ wrd)
 	}
 	else // если доска не пуста
 	{
-		// пробуем вписать слово горизонтально
+		// пробуем вписать слово горизонтально и вертикально
 		auto result = InsertHorizontally(wrd);
-		// пробуем вписать слово вертикально
 		auto extraResult = InsertVertically(wrd);
 
 		// дополняем стек результатов вставки вертикально
 		while (extraResult->Count)
-		{
-			//Draw((extraResult->Peek())->board);
 			result->Push(extraResult->Pop());
-		}
 
 		return result;
-	}
-}
-inline void Board::Draw(Graphics^% easel, bool resetZeroPoint, bool cutWords, float scale)
-{
-	auto easelHeight = easel->VisibleClipBounds.Height;
-	auto easelWidth = easel->VisibleClipBounds.Width;
-
-	auto zeroTop = (easelHeight - this->height * scale) / 2.5f;
-	auto zeroLeft = (easelWidth - this->width * scale) / 2;
-
-	if (resetZeroPoint)
-	{
-		zeroTop = 0.0f;
-		zeroLeft = 0.0f;
-	}
-
-	// порядковые номера слов
-	int nVertical = 1;
-	int nHorizontal = 1;
-
-	for each (auto item in words)
-	{
-		for (int i = 0; i < item->length; ++i)
-		{
-			Cell^ cell;
-
-			float currentVerticalLeft = zeroLeft + item->left * scale;
-			float currentVertiaclTop = zeroTop + item->top * scale + i * scale;
-			float currentHorizontalLeft = zeroLeft + item->left * scale + i * scale;
-			float currentHorizontalTop = zeroTop + item->top * scale;
-
-			if (item->lyt == "Horizontal")
-				cell = gcnew Cell(currentHorizontalLeft,
-								  currentHorizontalTop,
-								  scale,
-								  cutWords ? " " : item[i]->ToUpper(),
-								  i == 0 ? (nHorizontal++).ToString() : "",
-								  false);
-			else
-				cell = gcnew Cell(currentVerticalLeft,
-								  currentVertiaclTop,
-								  scale,
-								  cutWords ?
-								  " " : item[i]->ToUpper(),
-								  i == 0 ? (nVertical++).ToString() : "",
-								  true);
-
-			cell->draw(easel);
-		}
 	}
 }
 

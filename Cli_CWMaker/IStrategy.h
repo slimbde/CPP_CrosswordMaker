@@ -17,6 +17,7 @@ public:
 	void handle();
 	void next();
 	void preview();
+	void consolePreview();
 	void about();
 	void newOne();
 };

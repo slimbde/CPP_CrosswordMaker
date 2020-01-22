@@ -13,9 +13,9 @@ using namespace System::Drawing;
 [STAThreadAttribute]
 Int32 main(array<System::String^>^ args)
 {
-    Application::EnableVisualStyles();
-    Application::SetCompatibleTextRenderingDefault(false);
-    Application::Run(gcnew CliCWMaker::MainForm());
+	Application::EnableVisualStyles();
+	Application::SetCompatibleTextRenderingDefault(false);
+	Application::Run(gcnew CliCWMaker::MainForm());
 
-    return 0;
+	return 0;
 }

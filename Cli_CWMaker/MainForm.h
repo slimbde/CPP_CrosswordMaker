@@ -1,8 +1,6 @@
 #pragma once
 #include "CWStrategy.h"
 
-
-
 namespace CliCWMaker
 {
 	using namespace System;
@@ -15,14 +13,17 @@ namespace CliCWMaker
 	/// </summary>
 	public ref class MainForm : public Form
 	{
-		IStrategy^ strategy;    // àáñòðàêòíûé óêàçàòåëü êîìïîíåíòà Strategy èíêàïñóëÿöèÿ ëîãèêè ïðèëîæåíèÿ
+		// àáñòðàêòíûé óêàçàòåëü êîìïîíåíòà Strategy èíêàïñóëÿöèÿ ëîãèêè ïðèëîæåíèÿ
+		// ïðèìåð êîìïîçèöèè. êëàññ MainForm ïîëíîñòüþ óïðàâëÿåò æèçíåííûì öèêëîì
+		// ðåàëèçàöèè êëàññà IStrategy
+		IStrategy^ strategy;
 
 
 #pragma region formComponentsDeclaration
 
 		System::ComponentModel::IContainer^ components;
 		System::Windows::Forms::ToolStripButton^ bCutWords;
-		System::Windows::Forms::Label^ lOverflow;
+
 		System::Windows::Forms::ToolStripButton^ ñïðàâêàToolStripButton;
 		System::Windows::Forms::Label^ label2;
 		System::Windows::Forms::TextBox^ tbCountStates;
@@ -31,7 +32,6 @@ namespace CliCWMaker
 		System::Windows::Forms::TextBox^ tbHorizontal;
 		System::Windows::Forms::Label^ label3;
 		System::Windows::Forms::TextBox^ tbNotFitted;
-		//System::Windows::Forms::ToolTip^ toolTip1;
 		System::Windows::Forms::StatusStrip^ statusStrip1;
 		System::Windows::Forms::ToolStrip^ toolStrip1;
 		System::Windows::Forms::ToolStripButton^ ñîçäàòüToolStripButton;
@@ -52,7 +52,9 @@ namespace CliCWMaker
 		System::Windows::Forms::NumericUpDown^ numericUpDown1;
 		System::Windows::Forms::TextBox^ tbVertical;
 		System::Windows::Forms::ToolStripStatusLabel^ toolStripStatusLabel1;
-		System::Windows::Forms::Panel^ panel3;
+	private: System::Windows::Forms::ToolStripButton^ bConsole;
+
+		   System::Windows::Forms::Panel^ panel3;
 
 #pragma endregion
 
@@ -75,64 +77,49 @@ namespace CliCWMaker
 	+------------------------------*/
 	private: void InitializeComponent(void)
 	{
-		this->SuspendLayout();
-
 		System::ComponentModel::ComponentResourceManager^ resources = (gcnew System::ComponentModel::ComponentResourceManager(MainForm::typeid));
-		this->components = (gcnew System::ComponentModel::Container());
-
 		this->statusStrip1 = (gcnew System::Windows::Forms::StatusStrip());
-		this->statusStrip1->SuspendLayout();
 		this->statusLabel1 = (gcnew System::Windows::Forms::ToolStripStatusLabel());
 		this->toolStripStatusLabel1 = (gcnew System::Windows::Forms::ToolStripStatusLabel());
-
 		this->toolStrip1 = (gcnew System::Windows::Forms::ToolStrip());
-		this->toolStrip1->SuspendLayout();
 		this->ñîçäàòüToolStripButton = (gcnew System::Windows::Forms::ToolStripButton());
 		this->îòêðûòüToolStripButton = (gcnew System::Windows::Forms::ToolStripButton());
 		this->ñîõðàíèòüToolStripButton = (gcnew System::Windows::Forms::ToolStripButton());
 		this->ïå÷àòüToolStripButton = (gcnew System::Windows::Forms::ToolStripButton());
-		this->ñïðàâêàToolStripButton = (gcnew System::Windows::Forms::ToolStripButton());
 		this->bCutWords = (gcnew System::Windows::Forms::ToolStripButton());
-
+		this->ñïðàâêàToolStripButton = (gcnew System::Windows::Forms::ToolStripButton());
 		this->tabControl1 = (gcnew System::Windows::Forms::TabControl());
-		this->tabControl1->SuspendLayout();
-
 		this->tabPage1 = (gcnew System::Windows::Forms::TabPage());
-		this->tabPage1->SuspendLayout();
 		this->bHandle = (gcnew System::Windows::Forms::Button());
 		this->bClear = (gcnew System::Windows::Forms::Button());
 		this->tbSource = (gcnew System::Windows::Forms::TextBox());
-
 		this->tabPage2 = (gcnew System::Windows::Forms::TabPage());
-		this->tabPage2->SuspendLayout();
 		this->groupBox2 = (gcnew System::Windows::Forms::GroupBox());
-		this->groupBox2->SuspendLayout();
 		this->tbHorizontal = (gcnew System::Windows::Forms::TextBox());
-
 		this->groupBox1 = (gcnew System::Windows::Forms::GroupBox());
-		this->groupBox1->SuspendLayout();
 		this->tbVertical = (gcnew System::Windows::Forms::TextBox());
-
 		this->panel3 = (gcnew System::Windows::Forms::Panel());
-		this->panel3->SuspendLayout();
 		this->label3 = (gcnew System::Windows::Forms::Label());
 		this->tbNotFitted = (gcnew System::Windows::Forms::TextBox());
 		this->tbCountStates = (gcnew System::Windows::Forms::TextBox());
 		this->numericUpDown1 = (gcnew System::Windows::Forms::NumericUpDown());
-		(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numericUpDown1))->BeginInit();
 		this->label2 = (gcnew System::Windows::Forms::Label());
 		this->label1 = (gcnew System::Windows::Forms::Label());
-
 		this->panel2 = (gcnew System::Windows::Forms::Panel());
-		this->panel2->SuspendLayout();
 		this->bReset = (gcnew System::Windows::Forms::Button());
-
 		this->panel1 = (gcnew System::Windows::Forms::Panel());
-		this->panel1->SuspendLayout();
-		this->lOverflow = (gcnew System::Windows::Forms::Label());
-
-		//this->toolTip1 = (gcnew System::Windows::Forms::ToolTip(this->components));
-
+		this->bConsole = (gcnew System::Windows::Forms::ToolStripButton());
+		this->statusStrip1->SuspendLayout();
+		this->toolStrip1->SuspendLayout();
+		this->tabControl1->SuspendLayout();
+		this->tabPage1->SuspendLayout();
+		this->tabPage2->SuspendLayout();
+		this->groupBox2->SuspendLayout();
+		this->groupBox1->SuspendLayout();
+		this->panel3->SuspendLayout();
+		(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numericUpDown1))->BeginInit();
+		this->panel2->SuspendLayout();
+		this->SuspendLayout();
 		// 
 		// statusStrip1
 		// 
@@ -161,10 +148,10 @@ namespace CliCWMaker
 		// toolStrip1
 		// 
 		this->toolStrip1->BackColor = System::Drawing::SystemColors::Control;
-		this->toolStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(6)
+		this->toolStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(7)
 		{
 			this->ñîçäàòüToolStripButton,
-				this->îòêðûòüToolStripButton, this->ñîõðàíèòüToolStripButton, this->ïå÷àòüToolStripButton, this->bCutWords, this->ñïðàâêàToolStripButton
+				this->îòêðûòüToolStripButton, this->ñîõðàíèòüToolStripButton, this->ïå÷àòüToolStripButton, this->bConsole, this->bCutWords, this->ñïðàâêàToolStripButton
 		});
 		this->toolStrip1->LayoutStyle = System::Windows::Forms::ToolStripLayoutStyle::HorizontalStackWithOverflow;
 		this->toolStrip1->Location = System::Drawing::Point(0, 0);
@@ -176,10 +163,9 @@ namespace CliCWMaker
 		// 
 		// ñîçäàòüToolStripButton
 		// 
-		this->ñîçäàòüToolStripButton->Image = (cli::safe_cast<System::Drawing::Image^>(resources->GetObject(L"ñîçäàòüToolStripButton.Image")));
 		this->ñîçäàòüToolStripButton->ImageTransparentColor = System::Drawing::Color::Magenta;
 		this->ñîçäàòüToolStripButton->Name = L"ñîçäàòüToolStripButton";
-		this->ñîçäàòüToolStripButton->Size = System::Drawing::Size(70, 22);
+		this->ñîçäàòüToolStripButton->Size = System::Drawing::Size(54, 22);
 		this->ñîçäàòüToolStripButton->Text = L"&Ñîçäàòü";
 		this->ñîçäàòüToolStripButton->ToolTipText = L"Ñîçäàòü íîâûé êðîññâîðä";
 		this->ñîçäàòüToolStripButton->Click += gcnew System::EventHandler(this, &MainForm::ñîçäàòüToolStripButton_Click);
@@ -407,7 +393,6 @@ namespace CliCWMaker
 		this->tbNotFitted->Size = System::Drawing::Size(35, 20);
 		this->tbNotFitted->TabIndex = 3;
 		this->tbNotFitted->Text = L"0";
-		//this->toolTip1->SetToolTip(this->tbNotFitted, L"Íåò íåâîøåäøèõ ñëîâ");
 		// 
 		// tbCountStates
 		// 
@@ -475,7 +460,6 @@ namespace CliCWMaker
 		this->panel1->AutoScroll = true;
 		this->panel1->BackColor = System::Drawing::SystemColors::Info;
 		this->panel1->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
-		this->panel1->Controls->Add(this->lOverflow);
 		this->panel1->Dock = System::Windows::Forms::DockStyle::Top;
 		this->panel1->Location = System::Drawing::Point(0, 27);
 		this->panel1->Name = L"panel1";
@@ -483,20 +467,14 @@ namespace CliCWMaker
 		this->panel1->TabIndex = 6;
 		this->panel1->Paint += gcnew System::Windows::Forms::PaintEventHandler(this, &MainForm::panel1_Paint);
 		// 
-		// lOverflow
+		// bConsole
 		// 
-		this->lOverflow->AutoSize = true;
-		this->lOverflow->Font = (gcnew System::Drawing::Font(L"Calibri Light", 12, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
-															 static_cast<System::Byte>(204)));
-		this->lOverflow->ForeColor = System::Drawing::Color::IndianRed;
-		this->lOverflow->Location = System::Drawing::Point(144, 9);
-		this->lOverflow->Name = L"lOverflow";
-		this->lOverflow->Size = System::Drawing::Size(414, 38);
-		this->lOverflow->TabIndex = 0;
-		this->lOverflow->Text = L"Ñîñòàâëåííûé êðîññâîðä íå âìåùàåòñÿ â ðàáî÷óþ îáëàñòü.\r\nÂîñïîëüçóéòåñü ïðåäïðîñìî"
-			L"òðîì.";
-		this->lOverflow->TextAlign = System::Drawing::ContentAlignment::TopRight;
-		this->lOverflow->Visible = false;
+		this->bConsole->Image = (cli::safe_cast<System::Drawing::Image^>(resources->GetObject(L"bConsole.Image")));
+		this->bConsole->ImageTransparentColor = System::Drawing::Color::Magenta;
+		this->bConsole->Name = L"bConsole";
+		this->bConsole->Size = System::Drawing::Size(167, 22);
+		this->bConsole->Text = L"&Ïðåäïðîñìîòð (êîíñîëü)";
+		this->bConsole->Click += gcnew System::EventHandler(this, &MainForm::bConsole_Click);
 		// 
 		// MainForm
 		// 
@@ -528,8 +506,6 @@ namespace CliCWMaker
 		(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numericUpDown1))->EndInit();
 		this->panel2->ResumeLayout(false);
 		this->panel2->PerformLayout();
-		this->panel1->ResumeLayout(false);
-		this->panel1->PerformLayout();
 		this->ResumeLayout(false);
 		this->PerformLayout();
 
@@ -573,6 +549,10 @@ namespace CliCWMaker
 	{
 		strategy->preview();
 	}
+	private: System::Void bConsole_Click(System::Object^ sender, System::EventArgs^ e)
+	{
+		strategy->consolePreview();
+	}
 	private: System::Void ñïðàâêàToolStripButton_Click(System::Object^ sender, System::EventArgs^ e)
 	{
 		strategy->about();
@@ -586,5 +566,5 @@ namespace CliCWMaker
 	{
 		strategy->next();
 	}
-	};
+};
 }

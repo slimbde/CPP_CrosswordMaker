@@ -41,7 +41,13 @@
     <ClInclude Include="BoardDealer.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="PaintDealer.h">
+    <ClInclude Include="FormPainter.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="IPainter.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="ConsolePainter.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

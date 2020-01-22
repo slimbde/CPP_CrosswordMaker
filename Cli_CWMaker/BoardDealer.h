@@ -11,18 +11,17 @@ public:
 	property int FailsCount { int get() { return failedWords->Count; } }
 	property int CurrentHeight { int get() { return currentBoard->Height; } }
 	property int CurrentWidth { int get() { return currentBoard->Width; } }
+	property array<String^, 2>^ RawBoard { array<String^, 2>^ get() { return currentBoard->Brd; } }
 
 	BoardDealer();
 
 	void setCurrentBoard(int stateNo);
+	void reset();
+	int handle(Generic::List<String^>^ inputList);
 	List<String^>^ gimmeVWords();
 	List<String^>^ gimmeHWords();
 	array<String^>^ gimmeFails();
 	Board^ gimmeBoard();
-
-	// Унаследовано через IStrategy
-	virtual void reset();
-	virtual int handle(Generic::List<String^>^ inputList);
 
 
 private:

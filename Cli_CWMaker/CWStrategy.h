@@ -1,7 +1,8 @@
 #pragma once
 #include "IStrategy.h"
 #include "BoardDealer.h"
-#include "PaintDealer.h"
+#include "FormPainter.h"
+#include "ConsolePainter.h"
 using namespace System::Diagnostics;
 
 
@@ -9,7 +10,7 @@ ref class CWStrategy : IStrategy
 {
 
 public:
-	CWStrategy() { toolTip = gcnew System::Windows::Forms::ToolTip(); }
+	CWStrategy();
 
 	// Унаследовано через IStrategy
 	virtual void setObject(Form^ obj);  // установка объекта манипулирования
@@ -21,14 +22,26 @@ public:
 	virtual void handle();
 	virtual void next();
 	virtual void preview();
+	virtual void consolePreview();
 	virtual void about();
 	virtual void newOne();
 
 
 private:
-	BoardDealer^ bDealer;		// класс инкапсулирующий математическую модель доски
+	// класс инкапсулирующий математическую модель доски
+	// пример композиции (жесткой связи). Класс CWStrategy управляет
+	// жизненным циклом BoardDealer
+	BoardDealer^ bDealer;
 
-	Form^ mainForm;             // указатель объекта, с которым будем делать "всякое"..
+	// указатель объекта, с которым будем делать "всякое"..
+	// пример агрегации (слабой связи). Класс CWStrategy не управляет
+	// жизненным циклом класса MainForm
+	Form^ mainForm;
+
+	// объекты вывода кроссворда
+	// еще один пример композиции
+	IPainter^ painter;
+
 	Stopwatch^ watch;			// часы для замера производительности
 	ToolTip^ toolTip;           // экземпляр подсказки
 	List<String^>^ vWords;      // слова по вертикали текущего состояния
@@ -37,11 +50,16 @@ private:
 
 	Object^ getControl(String^ name);       // вытаскивает нужный элемент из объекта формы
 	List<String^>^ splitInput(Array^ arr);  // обработка введенных слов
-	void handleStates();
-	void handleFails();
-	void vhTextBoxesFill();
+	void handleStates();					// обработка состояний
+	void handleFails();						// обработка не вошедших слов
+	void vhTextBoxesFill();					// разбивка вошедших слов по группам
 };
 
+
+CWStrategy::CWStrategy()
+{
+	toolTip = gcnew System::Windows::Forms::ToolTip();
+}
 
 void CWStrategy::setObject(Form^ obj)
 {
@@ -62,7 +80,6 @@ void CWStrategy::reset()
 	((ToolStripButton^)getControl("bCutWords"))->Enabled = false;
 	((NumericUpDown^)getControl("numericUpDown1"))->Minimum = 0;
 	((NumericUpDown^)getControl("numericUpDown1"))->Maximum = 0;
-	((Label^)getControl("lOverflow"))->Visible = false;
 
 	auto easel = ((Panel^)getControl("panel1"))->CreateGraphics();
 	easel->Clear(SystemColors::Info);
@@ -108,8 +125,6 @@ void CWStrategy::clearField()
 }
 void CWStrategy::handle()
 {
-	((Label^)getControl("lOverflow"))->Visible = false;
-
 	auto input = ((TextBox^)getControl("tbSource"))->Lines;
 	auto inputList = splitInput(input);
 
@@ -149,19 +164,14 @@ void CWStrategy::next()
 
 		auto panel = ((Panel^)getControl("panel1"));
 		auto easel = panel->CreateGraphics();
-		easel->Clear(SystemColors::Info);
 
 		// инициализация класса рисования доски
-		auto painter = gcnew PaintDealer(bDealer);
+		auto board = bDealer->gimmeBoard();
+		painter = gcnew FormPainter(board, easel);
 
-		if (boardHeight * painter->Scale < panel->Height && boardWidth * painter->Scale < panel->Width)
-		{
-			auto cutWords = ((ToolStripButton^)getControl("bCutWords"))->Checked;
-
-			painter->drawBoard(easel, false, cutWords);
-		}
-		else
-			((Label^)getControl("lOverflow"))->Visible = true;
+		painter->CutWords = ((ToolStripButton^)getControl("bCutWords"))->Checked;
+		painter->ResetZeroPoint = false;
+		painter->drawBoard();
 	}
 }
 void CWStrategy::preview()
@@ -171,16 +181,25 @@ void CWStrategy::preview()
 		auto stateNo = (int)((NumericUpDown^)getControl("numericUpDown1"))->Value - 1;
 		bDealer->setCurrentBoard(stateNo);
 
-		auto cutWords = ((ToolStripButton^)getControl("bCutWords"))->Checked;
-		auto painter = gcnew PaintDealer(bDealer);
-		painter->preview(cutWords);
+		painter->CutWords = ((ToolStripButton^)getControl("bCutWords"))->Checked;
+		painter->preview();
+	}
+	else
+		MessageBox::Show("Составьте кроссворд!", "Application");
+}
+void CWStrategy::consolePreview()
+{
+	if (bDealer->StatesCount > 0)
+	{
+		painter = gcnew ConsolePainter(bDealer->RawBoard, bDealer->gimmeBoard());
+		painter->preview();
 	}
 	else
 		MessageBox::Show("Составьте кроссворд!", "Application");
 }
 void CWStrategy::about()
 {
-	MessageBox::Show("©slimHouse\n2019", "about");
+	MessageBox::Show("©slim\n2020", "about");
 }
 void CWStrategy::newOne()
 {
