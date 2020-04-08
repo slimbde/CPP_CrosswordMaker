@@ -1,10 +1,11 @@
 #pragma once
 #include "IPainter.h"
 using namespace System;
+using namespace Printing;
 
 
 
-ref class FormPainter : IPainter
+ref class PreviewPainter : IPainter
 {
 
 public:
@@ -20,11 +21,12 @@ public:
 		virtual void set(bool value) { resetZeroPoint = value; }
 	}
 
-	FormPainter(Board^ board, Graphics^% easel);
+	PreviewPainter(Board^ board);
 
-	virtual void drawWords() { }	// рисует слова на доске
-	virtual void drawBoard() { }	// рисует доску на холсте
-	virtual void preview();			// предпросмотр печати
+	// Inherited via IPainter
+	virtual void drawWords();
+	virtual void drawBoard();
+	virtual void preview();
 
 private:
 	Board^ board;				// доска для отрисовки
@@ -34,17 +36,18 @@ private:
 	bool cutWords;				// убрать буквы из клеток
 	bool resetZeroPoint;		// рисовать не с центра а от угла
 
+	void onPrintPage(Object^ sender, PrintPageEventArgs^ e);
 	void drawCell();
 };
 
 
 
-FormPainter::FormPainter(Board^ board, Graphics^% easel)
+PreviewPainter::PreviewPainter(Board^ board)
 {
 	this->board = board;
-	this->easel = easel;
 }
-void FormPainter::preview()
+
+void PreviewPainter::drawBoard()
 {
 	easel->Clear(SystemColors::Info);
 
@@ -100,8 +103,80 @@ void FormPainter::preview()
 		easel->DrawString(L"Составленный кроссворд не вмещается в рабочую область.\r\nВоспользуйтесь предпросмотром.",
 						  gcnew Drawing::Font("Calibri", scale / 1.5f, FontStyle::Regular), Brushes::Black, 10, 10);
 }
+void PreviewPainter::drawWords()
+{
+	auto hWords = board->hWords;
+	auto vWords = board->vWords;
 
-void FormPainter::drawCell()
+	float top = scale;
+	float left = board->Width * scale + scale * 2;
+
+	easel->DrawString("ПО ГОРИЗОНТАЛИ:", gcnew Drawing::Font("Calibri", scale / 2, FontStyle::Bold), Brushes::Black, left, top);
+	top += scale * 0.75f;
+
+	for (auto i = 0; i < hWords->Count; ++i)
+	{
+		easel->DrawString(i + 1 + ". " + hWords[i], gcnew Drawing::Font("Calibri", scale / 2), Brushes::Black, left, top);
+		top += scale * 0.6f;
+	}
+
+	top += scale * 0.75f;
+	easel->DrawString("ПО ВЕРТИКАЛИ:", gcnew Drawing::Font("Calibri", scale / 2, FontStyle::Bold), Brushes::Black, left, top);
+	top += scale * 0.75f;
+
+	for (auto i = 0; i < vWords->Count; ++i)
+	{
+		easel->DrawString(i + 1 + ". " + vWords[i], gcnew Drawing::Font("Calibri", scale / 2), Brushes::Black, left, top);
+		top += scale * 0.6f;
+	}
+
+	easel->DrawString("©slim 2020", gcnew Drawing::Font("Calibri", scale / 2), Brushes::LightGray, -scale, -scale);
+}
+void PreviewPainter::preview()
+{
+	auto wMargin = scale;
+	auto hMargin = scale;
+
+	auto hWords = board->hWords;
+	auto vWords = board->vWords;
+
+	// ищем длиннейшее горизонтальное слово
+	int maxLength = 0;
+	for each (auto item in hWords)
+		maxLength = maxLength > item->Length ? maxLength : item->Length;
+
+	auto paperWidth = int(board->Width * scale + wMargin * 2 + 1 / hWords->Count * scale * 7 + maxLength * scale);
+	auto paperHeight = int(board->Height * scale + hMargin * 2 + 1 / vWords->Count * scale * 4);
+
+	auto print = gcnew PrintDocument();
+
+	print->DefaultPageSettings->PaperSize = gcnew Printing::PaperSize("MySize", paperWidth, paperHeight);
+	print->OriginAtMargins = true;
+	print->DefaultPageSettings->Margins = gcnew Printing::Margins((int)wMargin, (int)wMargin, (int)hMargin, (int)hMargin);
+	print->PrintPage += gcnew PrintPageEventHandler(this, &PreviewPainter::onPrintPage);
+
+	auto printDialog = gcnew PrintPreviewDialog();
+
+	printDialog->AutoScrollMargin = System::Drawing::Size(0, 0);
+	printDialog->AutoScrollMinSize = System::Drawing::Size(0, 0);
+	printDialog->ClientSize = System::Drawing::Size(400, 300);
+	printDialog->Document = print;
+	printDialog->Enabled = true;
+	printDialog->Visible = false;
+	printDialog->StartPosition = FormStartPosition::CenterParent;
+	printDialog->WindowState = System::Windows::Forms::FormWindowState::Maximized;
+	printDialog->ShowDialog();
+}
+
+
+void PreviewPainter::onPrintPage(Object^ sender, PrintPageEventArgs^ e)
+{
+	easel = e->Graphics;
+	resetZeroPoint = true;
+	drawBoard();
+	drawWords();
+}
+void PreviewPainter::drawCell()
 {
 	auto rect = Rectangle(cell->Left, cell->Top, cell->CellSize, cell->CellSize);
 	easel->DrawRectangle(Pens::Black, rect);

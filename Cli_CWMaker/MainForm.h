@@ -72,9 +72,7 @@ namespace CliCWMaker
 		}
 
 
-	/*------------------------------+
-		Çàêðûòûå ìåòîäû êëàññà
-	+------------------------------*/
+	// Çàêðûòûå ìåòîäû êëàññà
 	private: void InitializeComponent(void)
 	{
 		System::ComponentModel::ComponentResourceManager^ resources = (gcnew System::ComponentModel::ComponentResourceManager(MainForm::typeid));
@@ -86,6 +84,7 @@ namespace CliCWMaker
 		this->îòêðûòüToolStripButton = (gcnew System::Windows::Forms::ToolStripButton());
 		this->ñîõðàíèòüToolStripButton = (gcnew System::Windows::Forms::ToolStripButton());
 		this->ïå÷àòüToolStripButton = (gcnew System::Windows::Forms::ToolStripButton());
+		this->bConsole = (gcnew System::Windows::Forms::ToolStripButton());
 		this->bCutWords = (gcnew System::Windows::Forms::ToolStripButton());
 		this->ñïðàâêàToolStripButton = (gcnew System::Windows::Forms::ToolStripButton());
 		this->tabControl1 = (gcnew System::Windows::Forms::TabControl());
@@ -108,7 +107,6 @@ namespace CliCWMaker
 		this->panel2 = (gcnew System::Windows::Forms::Panel());
 		this->bReset = (gcnew System::Windows::Forms::Button());
 		this->panel1 = (gcnew System::Windows::Forms::Panel());
-		this->bConsole = (gcnew System::Windows::Forms::ToolStripButton());
 		this->statusStrip1->SuspendLayout();
 		this->toolStrip1->SuspendLayout();
 		this->tabControl1->SuspendLayout();
@@ -163,9 +161,10 @@ namespace CliCWMaker
 		// 
 		// ñîçäàòüToolStripButton
 		// 
+		this->ñîçäàòüToolStripButton->Image = (cli::safe_cast<System::Drawing::Image^>(resources->GetObject(L"ñîçäàòüToolStripButton.Image")));
 		this->ñîçäàòüToolStripButton->ImageTransparentColor = System::Drawing::Color::Magenta;
 		this->ñîçäàòüToolStripButton->Name = L"ñîçäàòüToolStripButton";
-		this->ñîçäàòüToolStripButton->Size = System::Drawing::Size(54, 22);
+		this->ñîçäàòüToolStripButton->Size = System::Drawing::Size(70, 22);
 		this->ñîçäàòüToolStripButton->Text = L"&Ñîçäàòü";
 		this->ñîçäàòüToolStripButton->ToolTipText = L"Ñîçäàòü íîâûé êðîññâîðä";
 		this->ñîçäàòüToolStripButton->Click += gcnew System::EventHandler(this, &MainForm::ñîçäàòüToolStripButton_Click);
@@ -196,9 +195,19 @@ namespace CliCWMaker
 		this->ïå÷àòüToolStripButton->ImageTransparentColor = System::Drawing::Color::Magenta;
 		this->ïå÷àòüToolStripButton->Name = L"ïå÷àòüToolStripButton";
 		this->ïå÷àòüToolStripButton->Size = System::Drawing::Size(110, 22);
-		this->ïå÷àòüToolStripButton->Text = L"&Ïðåäïðîñìîòð";
+		this->ïå÷àòüToolStripButton->Text = L"Ïðåäïðîñìîòð";
 		this->ïå÷àòüToolStripButton->ToolTipText = L"Ïðåäïðîñìîòð è ïå÷àòü";
 		this->ïå÷àòüToolStripButton->Click += gcnew System::EventHandler(this, &MainForm::ïå÷àòüToolStripButton_Click);
+		// 
+		// bConsole
+		// 
+		this->bConsole->Image = (cli::safe_cast<System::Drawing::Image^>(resources->GetObject(L"bConsole.Image")));
+		this->bConsole->ImageTransparentColor = System::Drawing::Color::Magenta;
+		this->bConsole->Name = L"bConsole";
+		this->bConsole->Size = System::Drawing::Size(167, 22);
+		this->bConsole->Text = L"Ïðåäïðîñìîòð (êîíñîëü)";
+		this->bConsole->ToolTipText = L"Ïðåäïðîñìîòð â êîíñîëè";
+		this->bConsole->Click += gcnew System::EventHandler(this, &MainForm::bConsole_Click);
 		// 
 		// bCutWords
 		// 
@@ -211,19 +220,19 @@ namespace CliCWMaker
 		this->bCutWords->Image = (cli::safe_cast<System::Drawing::Image^>(resources->GetObject(L"bCutWords.Image")));
 		this->bCutWords->ImageTransparentColor = System::Drawing::Color::Magenta;
 		this->bCutWords->Name = L"bCutWords";
-		this->bCutWords->Size = System::Drawing::Size(133, 22);
-		this->bCutWords->Text = L"ÒÎËÜÊÎ ÊÀÐÊÀÑ";
+		this->bCutWords->Size = System::Drawing::Size(78, 22);
+		this->bCutWords->Text = L"ÊÀÐÊÀÑ";
 		this->bCutWords->ToolTipText = L"Óáðàòü ñëîâà èç ñåòêè êðîññâîðäà";
 		this->bCutWords->Click += gcnew System::EventHandler(this, &MainForm::bCutWords_Click);
 		// 
 		// ñïðàâêàToolStripButton
 		// 
-		this->ñïðàâêàToolStripButton->DisplayStyle = System::Windows::Forms::ToolStripItemDisplayStyle::Image;
+		this->ñïðàâêàToolStripButton->AutoToolTip = false;
 		this->ñïðàâêàToolStripButton->Image = (cli::safe_cast<System::Drawing::Image^>(resources->GetObject(L"ñïðàâêàToolStripButton.Image")));
 		this->ñïðàâêàToolStripButton->ImageTransparentColor = System::Drawing::Color::Magenta;
 		this->ñïðàâêàToolStripButton->Name = L"ñïðàâêàToolStripButton";
-		this->ñïðàâêàToolStripButton->Size = System::Drawing::Size(23, 22);
-		this->ñïðàâêàToolStripButton->Text = L"Ñïð&àâêà";
+		this->ñïðàâêàToolStripButton->Size = System::Drawing::Size(102, 22);
+		this->ñïðàâêàToolStripButton->Text = L"Î ïð&îãðàììå";
 		this->ñïðàâêàToolStripButton->ToolTipText = L"Ïðîñìîòðåòü ñïðàâêó";
 		this->ñïðàâêàToolStripButton->Click += gcnew System::EventHandler(this, &MainForm::ñïðàâêàToolStripButton_Click);
 		// 
@@ -467,15 +476,6 @@ namespace CliCWMaker
 		this->panel1->TabIndex = 6;
 		this->panel1->Paint += gcnew System::Windows::Forms::PaintEventHandler(this, &MainForm::panel1_Paint);
 		// 
-		// bConsole
-		// 
-		this->bConsole->Image = (cli::safe_cast<System::Drawing::Image^>(resources->GetObject(L"bConsole.Image")));
-		this->bConsole->ImageTransparentColor = System::Drawing::Color::Magenta;
-		this->bConsole->Name = L"bConsole";
-		this->bConsole->Size = System::Drawing::Size(167, 22);
-		this->bConsole->Text = L"&Ïðåäïðîñìîòð (êîíñîëü)";
-		this->bConsole->Click += gcnew System::EventHandler(this, &MainForm::bConsole_Click);
-		// 
 		// MainForm
 		// 
 		this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
@@ -512,9 +512,7 @@ namespace CliCWMaker
 	}
 
 
-	/*----------------+
-		Ñîáûòèÿ
-	+----------------*/
+	// Ñîáûòèÿ
 	private: System::Void tbSource_Enter(System::Object^ sender, System::EventArgs^ e)
 	{
 		strategy->inputFieldEnter();
@@ -566,5 +564,5 @@ namespace CliCWMaker
 	{
 		strategy->next();
 	}
-};
+	};
 }

@@ -3,6 +3,7 @@
 #include "BoardDealer.h"
 #include "FormPainter.h"
 #include "ConsolePainter.h"
+#include "PreviewPainter.h"
 using namespace System::Diagnostics;
 
 
@@ -171,17 +172,16 @@ void CWStrategy::next()
 
 		painter->CutWords = ((ToolStripButton^)getControl("bCutWords"))->Checked;
 		painter->ResetZeroPoint = false;
-		painter->drawBoard();
+		painter->preview();
 	}
 }
 void CWStrategy::preview()
 {
 	if (bDealer->StatesCount > 0)
 	{
-		auto stateNo = (int)((NumericUpDown^)getControl("numericUpDown1"))->Value - 1;
-		bDealer->setCurrentBoard(stateNo);
-
+		painter = gcnew PreviewPainter(bDealer->gimmeBoard());
 		painter->CutWords = ((ToolStripButton^)getControl("bCutWords"))->Checked;
+
 		painter->preview();
 	}
 	else

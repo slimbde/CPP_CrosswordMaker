@@ -152,6 +152,7 @@
     </ClInclude>
     <ClInclude Include="IStrategy.h" />
     <ClInclude Include="FormPainter.h" />
+    <ClInclude Include="PreviewPainter.h" />
     <ClInclude Include="Word.h" />
   </ItemGroup>
   <ItemGroup>
