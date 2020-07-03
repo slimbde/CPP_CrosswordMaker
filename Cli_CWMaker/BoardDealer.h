@@ -9,9 +9,6 @@ ref class BoardDealer
 public:
 	property int StatesCount { int get() { return states->Count; } }
 	property int FailsCount { int get() { return failedWords->Count; } }
-	property int CurrentHeight { int get() { return currentBoard->Height; } }
-	property int CurrentWidth { int get() { return currentBoard->Width; } }
-	property array<String^, 2>^ RawBoard { array<String^, 2>^ get() { return currentBoard->Brd; } }
 
 	BoardDealer();
 
@@ -21,13 +18,14 @@ public:
 	List<String^>^ gimmeVWords();
 	List<String^>^ gimmeHWords();
 	array<String^>^ gimmeFails();
-	Board^ gimmeBoard();
+	void DrawBoard(Graphics^% easel, bool cutWords, bool resetZeroPoint);
+	void PreviewBoard(bool cutWords);
 
 
 private:
-	Generic::Stack<Board^ >^ states;		// стек состояний
-	Generic::Stack<String^ >^ failedWords;	// стек для не вставленных слов
-	Board^ currentBoard;					// текущее обрабатываемое состояние
+	Generic::Stack<Board^ >^ states;		// СЃС‚РµРє СЃРѕСЃС‚РѕСЏРЅРёР№
+	Generic::Stack<String^ >^ failedWords;	// СЃС‚РµРє РґР»СЏ РЅРµ РІСЃС‚Р°РІР»РµРЅРЅС‹С… СЃР»РѕРІ
+	Board^ currentBoard;					// С‚РµРєСѓС‰РµРµ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРјРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ
 
 	void compose(Generic::List<String^>^ words);
 };
@@ -46,19 +44,34 @@ void BoardDealer::setCurrentBoard(int stateNo)
 }
 List<String^>^ BoardDealer::gimmeVWords()
 {
-	return currentBoard->vWords;
+	auto result = gcnew List<String^>();
+	for each (auto item in currentBoard->vWords)
+		result->Add(item->Text);
+
+	return result;
 }
 List<String^>^ BoardDealer::gimmeHWords()
 {
-	return currentBoard->hWords;
+	auto result = gcnew List<String^>();
+	for each (auto item in currentBoard->hWords)
+		result->Add(item->Text);
+
+	return result;
 }
 array<String^>^ BoardDealer::gimmeFails()
 {
 	return failedWords->ToArray();
 }
-Board^ BoardDealer::gimmeBoard()
+void BoardDealer::DrawBoard(Graphics^% easel, bool cutWords, bool resetZeroPoint)
 {
-	return currentBoard;
+	currentBoard->CutWords = cutWords;
+	currentBoard->ResetZeroPoint = resetZeroPoint;
+	currentBoard->GetDrawn(easel);
+}
+void BoardDealer::PreviewBoard(bool cutWords)
+{
+	currentBoard->CutWords = cutWords;
+	currentBoard->Preview();
 }
 
 void BoardDealer::reset()
@@ -77,67 +90,67 @@ void BoardDealer::compose(List<String^>^ words)
 {
 	Console::WriteLine("\nStarted handling words at " + DateTime::Now);
 
-	// сортируем по длине слова
+	// СЃРѕСЂС‚РёСЂСѓРµРј РїРѕ РґР»РёРЅРµ СЃР»РѕРІР°
 	words->Sort(gcnew CompareByLength());
 
 	auto wrds = gcnew Generic::Stack<String^>(words);
 
-	// создаем резервный стек для предыдущего состояния в случае неудачи
+	// СЃРѕР·РґР°РµРј СЂРµР·РµСЂРІРЅС‹Р№ СЃС‚РµРє РґР»СЏ РїСЂРµРґС‹РґСѓС‰РµРіРѕ СЃРѕСЃС‚РѕСЏРЅРёСЏ РІ СЃР»СѓС‡Р°Рµ РЅРµСѓРґР°С‡Рё
 	Generic::Stack<Board^ >^ reserve;
 
-	// создаем поле высотой в самое длинное слово
-	states->Push(gcnew Board(wrds->Peek()->Length, 1));
+	// СЃРѕР·РґР°РµРј РїРѕР»Рµ РІС‹СЃРѕС‚РѕР№ РІ СЃР°РјРѕРµ РґР»РёРЅРЅРѕРµ СЃР»РѕРІРѕ
+	states->Push(gcnew Board(Point(1, wrds->Peek()->Length)));
 
-	// пока в стеке вставляемых слов есть слова
+	// РїРѕРєР° РІ СЃС‚РµРєРµ РІСЃС‚Р°РІР»СЏРµРјС‹С… СЃР»РѕРІ РµСЃС‚СЊ СЃР»РѕРІР°
 	while (wrds->Count)
 	{
-		// крутимся пока есть состояния в стеке состояний
+		// РєСЂСѓС‚РёРјСЃСЏ РїРѕРєР° РµСЃС‚СЊ СЃРѕСЃС‚РѕСЏРЅРёСЏ РІ СЃС‚РµРєРµ СЃРѕСЃС‚РѕСЏРЅРёР№
 		do
 		{
-			// достаем из стека состояний последнее состояние
+			// РґРѕСЃС‚Р°РµРј РёР· СЃС‚РµРєР° СЃРѕСЃС‚РѕСЏРЅРёР№ РїРѕСЃР»РµРґРЅРµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ
 			Board^ lastState = states->Pop();
 
-			// временный стек для хранения результатов добавления одного слова
+			// РІСЂРµРјРµРЅРЅС‹Р№ СЃС‚РµРє РґР»СЏ С…СЂР°РЅРµРЅРёСЏ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РґРѕР±Р°РІР»РµРЅРёСЏ РѕРґРЅРѕРіРѕ СЃР»РѕРІР°
 			Generic::Stack<Board^ >^ results = gcnew Generic::Stack<Board^ >();
 
-			// получим стек результатов добавления слова к этому состоянию
-			// взглянем на верхнее слово в стеке слов пока его не снимая
-			results = lastState->Alter(wrds->Peek());
+			// РїРѕР»СѓС‡РёРј СЃС‚РµРє СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РґРѕР±Р°РІР»РµРЅРёСЏ СЃР»РѕРІР° Рє СЌС‚РѕРјСѓ СЃРѕСЃС‚РѕСЏРЅРёСЋ
+			// РІР·РіР»СЏРЅРµРј РЅР° РІРµСЂС…РЅРµРµ СЃР»РѕРІРѕ РІ СЃС‚РµРєРµ СЃР»РѕРІ РїРѕРєР° РµРіРѕ РЅРµ СЃРЅРёРјР°СЏ
+			results = lastState->Append(wrds->Peek());
 
-			// если получилось и результат не пустой
+			// РµСЃР»Рё РїРѕР»СѓС‡РёР»РѕСЃСЊ Рё СЂРµР·СѓР»СЊС‚Р°С‚ РЅРµ РїСѓСЃС‚РѕР№
 			if (results->Count != 0)
 			{
-				// снимем слово со стека слов
+				// СЃРЅРёРјРµРј СЃР»РѕРІРѕ СЃРѕ СЃС‚РµРєР° СЃР»РѕРІ
 				wrds->Pop();
-				// а если в стеке не вставленных слов что-то есть, достаем
-				// чтобы попробовать еще раз вставить
+				// Р° РµСЃР»Рё РІ СЃС‚РµРєРµ РЅРµ РІСЃС‚Р°РІР»РµРЅРЅС‹С… СЃР»РѕРІ С‡С‚Рѕ-С‚Рѕ РµСЃС‚СЊ, РґРѕСЃС‚Р°РµРј
+				// С‡С‚РѕР±С‹ РїРѕРїСЂРѕР±РѕРІР°С‚СЊ РµС‰Рµ СЂР°Р· РІСЃС‚Р°РІРёС‚СЊ
 				if (failedWords->Count)
 					wrds->Push(failedWords->Pop());
 
-				// очищаем стек состояний
+				// РѕС‡РёС‰Р°РµРј СЃС‚РµРє СЃРѕСЃС‚РѕСЏРЅРёР№
 				states->Clear();
 
-				// пакуем результаты в стек состояний
+				// РїР°РєСѓРµРј СЂРµР·СѓР»СЊС‚Р°С‚С‹ РІ СЃС‚РµРє СЃРѕСЃС‚РѕСЏРЅРёР№
 				states = gcnew Generic::Stack<Board^ >(results);
 
-				// пакуем результаты в резервный массив
+				// РїР°РєСѓРµРј СЂРµР·СѓР»СЊС‚Р°С‚С‹ РІ СЂРµР·РµСЂРІРЅС‹Р№ РјР°СЃСЃРёРІ
 				reserve = gcnew Generic::Stack<Board^ >(results);
 
-				// выходим из каруселей состояний к следующему слову
+				// РІС‹С…РѕРґРёРј РёР· РєР°СЂСѓСЃРµР»РµР№ СЃРѕСЃС‚РѕСЏРЅРёР№ Рє СЃР»РµРґСѓСЋС‰РµРјСѓ СЃР»РѕРІСѓ
 				break;
 			}
 		}
 		while (states->Count);
 
-		// если не осталось состояний
+		// РµСЃР»Рё РЅРµ РѕСЃС‚Р°Р»РѕСЃСЊ СЃРѕСЃС‚РѕСЏРЅРёР№
 		if (!states->Count)
 		{
-			// но стек слов еще не пуст
+			// РЅРѕ СЃС‚РµРє СЃР»РѕРІ РµС‰Рµ РЅРµ РїСѓСЃС‚
 			if (wrds->Count)
 			{
-				// присваиваем прошлые состояния из резервного стека
+				// РїСЂРёСЃРІР°РёРІР°РµРј РїСЂРѕС€Р»С‹Рµ СЃРѕСЃС‚РѕСЏРЅРёСЏ РёР· СЂРµР·РµСЂРІРЅРѕРіРѕ СЃС‚РµРєР°
 				states = gcnew Generic::Stack<Board^ >(reserve);
-				// сохраняем текущее слово чтобы попробовать вставить другие
+				// СЃРѕС…СЂР°РЅСЏРµРј С‚РµРєСѓС‰РµРµ СЃР»РѕРІРѕ С‡С‚РѕР±С‹ РїРѕРїСЂРѕР±РѕРІР°С‚СЊ РІСЃС‚Р°РІРёС‚СЊ РґСЂСѓРіРёРµ
 				failedWords->Push(wrds->Pop());
 			}
 			else

@@ -1,29 +1,27 @@
 #pragma once
-#include "CWStrategy.h"
+#include "BoardDealer.h"
 
 namespace CliCWMaker
 {
 	using namespace System;
 	using namespace System::ComponentModel;
 	using namespace System::Windows::Forms;
+	using namespace System::Diagnostics;
+	using namespace System::IO;
 
 
-	/// <summary>
-	/// Основной класс приложения
-	/// </summary>
 	public ref class MainForm : public Form
 	{
-		// абстрактный указатель компонента Strategy инкапсуляция логики приложения
-		// пример композиции. класс MainForm полностью управляет жизненным циклом
-		// реализации класса IStrategy
-		IStrategy^ strategy;
+		delegate int intListDelegate(List<String^>^);
 
+		BoardDealer^ bDealer;		// составитель слов
+		Stopwatch^ watch;			// часы для замера производительности
+		ToolTip^ toolTip;           // экземпляр подсказки
 
 #pragma region formComponentsDeclaration
 
 		System::ComponentModel::IContainer^ components;
 		System::Windows::Forms::ToolStripButton^ bCutWords;
-
 		System::Windows::Forms::ToolStripButton^ справкаToolStripButton;
 		System::Windows::Forms::Label^ label2;
 		System::Windows::Forms::TextBox^ tbCountStates;
@@ -35,8 +33,7 @@ namespace CliCWMaker
 		System::Windows::Forms::StatusStrip^ statusStrip1;
 		System::Windows::Forms::ToolStrip^ toolStrip1;
 		System::Windows::Forms::ToolStripButton^ создатьToolStripButton;
-		System::Windows::Forms::ToolStripButton^ открытьToolStripButton;
-		System::Windows::Forms::ToolStripButton^ сохранитьToolStripButton;
+		System::Windows::Forms::ToolStripButton^ loadToolStripButton;
 		System::Windows::Forms::ToolStripButton^ печатьToolStripButton;
 		System::Windows::Forms::TabControl^ tabControl1;
 		System::Windows::Forms::TabPage^ tabPage1;
@@ -52,9 +49,7 @@ namespace CliCWMaker
 		System::Windows::Forms::NumericUpDown^ numericUpDown1;
 		System::Windows::Forms::TextBox^ tbVertical;
 		System::Windows::Forms::ToolStripStatusLabel^ toolStripStatusLabel1;
-	private: System::Windows::Forms::ToolStripButton^ bConsole;
-
-		   System::Windows::Forms::Panel^ panel3;
+		System::Windows::Forms::Panel^ panel3;
 
 #pragma endregion
 
@@ -64,15 +59,14 @@ namespace CliCWMaker
 			if (components)
 				delete components;
 		}
-		MainForm()
+		MainForm(BoardDealer^ dealer)
 		{
-			InitializeComponent();          // инициализация компонентов формы
-			strategy = gcnew CWStrategy();  // создание экземпляра стратегии
-			strategy->setObject(this);      // установка объекта манипулирования
+			InitializeComponent();
+			bDealer = dealer;
+			toolTip = gcnew System::Windows::Forms::ToolTip();
 		}
 
 
-	// Закрытые методы класса
 	private: void InitializeComponent(void)
 	{
 		System::ComponentModel::ComponentResourceManager^ resources = (gcnew System::ComponentModel::ComponentResourceManager(MainForm::typeid));
@@ -81,12 +75,10 @@ namespace CliCWMaker
 		this->toolStripStatusLabel1 = (gcnew System::Windows::Forms::ToolStripStatusLabel());
 		this->toolStrip1 = (gcnew System::Windows::Forms::ToolStrip());
 		this->создатьToolStripButton = (gcnew System::Windows::Forms::ToolStripButton());
-		this->открытьToolStripButton = (gcnew System::Windows::Forms::ToolStripButton());
-		this->сохранитьToolStripButton = (gcnew System::Windows::Forms::ToolStripButton());
 		this->печатьToolStripButton = (gcnew System::Windows::Forms::ToolStripButton());
-		this->bConsole = (gcnew System::Windows::Forms::ToolStripButton());
 		this->bCutWords = (gcnew System::Windows::Forms::ToolStripButton());
 		this->справкаToolStripButton = (gcnew System::Windows::Forms::ToolStripButton());
+		this->loadToolStripButton = (gcnew System::Windows::Forms::ToolStripButton());
 		this->tabControl1 = (gcnew System::Windows::Forms::TabControl());
 		this->tabPage1 = (gcnew System::Windows::Forms::TabPage());
 		this->bHandle = (gcnew System::Windows::Forms::Button());
@@ -146,10 +138,10 @@ namespace CliCWMaker
 		// toolStrip1
 		// 
 		this->toolStrip1->BackColor = System::Drawing::SystemColors::Control;
-		this->toolStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(7)
+		this->toolStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(5)
 		{
 			this->создатьToolStripButton,
-				this->открытьToolStripButton, this->сохранитьToolStripButton, this->печатьToolStripButton, this->bConsole, this->bCutWords, this->справкаToolStripButton
+				this->печатьToolStripButton, this->bCutWords, this->справкаToolStripButton, this->loadToolStripButton
 		});
 		this->toolStrip1->LayoutStyle = System::Windows::Forms::ToolStripLayoutStyle::HorizontalStackWithOverflow;
 		this->toolStrip1->Location = System::Drawing::Point(0, 0);
@@ -169,26 +161,6 @@ namespace CliCWMaker
 		this->создатьToolStripButton->ToolTipText = L"Создать новый кроссворд";
 		this->создатьToolStripButton->Click += gcnew System::EventHandler(this, &MainForm::создатьToolStripButton_Click);
 		// 
-		// открытьToolStripButton
-		// 
-		this->открытьToolStripButton->DisplayStyle = System::Windows::Forms::ToolStripItemDisplayStyle::Image;
-		this->открытьToolStripButton->Image = (cli::safe_cast<System::Drawing::Image^>(resources->GetObject(L"открытьToolStripButton.Image")));
-		this->открытьToolStripButton->ImageTransparentColor = System::Drawing::Color::Magenta;
-		this->открытьToolStripButton->Name = L"открытьToolStripButton";
-		this->открытьToolStripButton->Size = System::Drawing::Size(23, 22);
-		this->открытьToolStripButton->Text = L"&Открыть";
-		this->открытьToolStripButton->Visible = false;
-		// 
-		// сохранитьToolStripButton
-		// 
-		this->сохранитьToolStripButton->DisplayStyle = System::Windows::Forms::ToolStripItemDisplayStyle::Image;
-		this->сохранитьToolStripButton->Image = (cli::safe_cast<System::Drawing::Image^>(resources->GetObject(L"сохранитьToolStripButton.Image")));
-		this->сохранитьToolStripButton->ImageTransparentColor = System::Drawing::Color::Magenta;
-		this->сохранитьToolStripButton->Name = L"сохранитьToolStripButton";
-		this->сохранитьToolStripButton->Size = System::Drawing::Size(23, 22);
-		this->сохранитьToolStripButton->Text = L"&Сохранить";
-		this->сохранитьToolStripButton->Visible = false;
-		// 
 		// печатьToolStripButton
 		// 
 		this->печатьToolStripButton->Image = (cli::safe_cast<System::Drawing::Image^>(resources->GetObject(L"печатьToolStripButton.Image")));
@@ -198,16 +170,6 @@ namespace CliCWMaker
 		this->печатьToolStripButton->Text = L"Предпросмотр";
 		this->печатьToolStripButton->ToolTipText = L"Предпросмотр и печать";
 		this->печатьToolStripButton->Click += gcnew System::EventHandler(this, &MainForm::печатьToolStripButton_Click);
-		// 
-		// bConsole
-		// 
-		this->bConsole->Image = (cli::safe_cast<System::Drawing::Image^>(resources->GetObject(L"bConsole.Image")));
-		this->bConsole->ImageTransparentColor = System::Drawing::Color::Magenta;
-		this->bConsole->Name = L"bConsole";
-		this->bConsole->Size = System::Drawing::Size(167, 22);
-		this->bConsole->Text = L"Предпросмотр (консоль)";
-		this->bConsole->ToolTipText = L"Предпросмотр в консоли";
-		this->bConsole->Click += gcnew System::EventHandler(this, &MainForm::bConsole_Click);
 		// 
 		// bCutWords
 		// 
@@ -235,6 +197,16 @@ namespace CliCWMaker
 		this->справкаToolStripButton->Text = L"О пр&ограмме";
 		this->справкаToolStripButton->ToolTipText = L"Просмотреть справку";
 		this->справкаToolStripButton->Click += gcnew System::EventHandler(this, &MainForm::справкаToolStripButton_Click);
+		// 
+		// loadToolStripButton
+		// 
+		this->loadToolStripButton->Image = (cli::safe_cast<System::Drawing::Image^>(resources->GetObject(L"loadToolStripButton.Image")));
+		this->loadToolStripButton->ImageTransparentColor = System::Drawing::Color::Magenta;
+		this->loadToolStripButton->Name = L"loadToolStripButton";
+		this->loadToolStripButton->Size = System::Drawing::Size(81, 22);
+		this->loadToolStripButton->Text = L"Загрузить";
+		this->loadToolStripButton->ToolTipText = L"Загрузить список слов из файла";
+		this->loadToolStripButton->Click += gcnew System::EventHandler(this, &MainForm::loadToolStripButton_Click);
 		// 
 		// tabControl1
 		// 
@@ -488,7 +460,7 @@ namespace CliCWMaker
 		this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedSingle;
 		this->MaximizeBox = false;
 		this->Name = L"MainForm";
-		this->Text = L"CrossWRD 1.0";
+		this->Text = L"Составитель кроссвордов";
 		this->statusStrip1->ResumeLayout(false);
 		this->statusStrip1->PerformLayout();
 		this->toolStrip1->ResumeLayout(false);
@@ -515,54 +487,223 @@ namespace CliCWMaker
 	// События
 	private: System::Void tbSource_Enter(System::Object^ sender, System::EventArgs^ e)
 	{
-		strategy->inputFieldEnter();
+
+		if (tbSource->GetType() == TextBox::typeid)
+		{
+			if (tbSource->Lines->Length && tbSource->Lines[0] == "Введите слова")
+			{
+				tbSource->Lines = nullptr;
+				tbSource->ForeColor = Color::Black;
+			}
+		}
 	}
 	private: System::Void tbSource_Leave(System::Object^ sender, System::EventArgs^ e)
 	{
-		strategy->inputFieldLeave();
+		if (tbSource->GetType() == TextBox::typeid)
+		{
+			if (!tbSource->Lines->Length)
+			{
+				tbSource->ForeColor = SystemColors::ButtonShadow;
+				tbSource->Lines = gcnew array<String^>{ "Введите слова", "через пробел", "или с новых строк" };
+			}
+		}
 	}
-
 	private: System::Void bClear_Click(System::Object^ sender, System::EventArgs^ e)
 	{
-		strategy->clearField();
+		if (tbSource->GetType() == TextBox::typeid)
+		{
+			tbSource->ForeColor = SystemColors::ButtonShadow;
+			tbSource->Lines = gcnew array<String^>{ "Введите слова", "через пробел", "или с новых строк" };
+		}
 	}
 	private: System::Void bReset_Click(System::Object^ sender, System::EventArgs^ e)
 	{
-		strategy->reset();
+		bDealer->reset();
+
+		// динамическое изменение компонентов формы
+		tabControl1->SelectedIndex = 0;
+		tbVertical->Text = "";
+		tbHorizontal->Text = "";
+		tbCountStates->Text = "0";
+		tbNotFitted->Text = "0";
+		bCutWords->Checked = false;
+		bCutWords->Enabled = false;
+		numericUpDown1->Minimum = 0;
+		numericUpDown1->Maximum = 0;
+
+		auto easel = panel1->CreateGraphics();
+		easel->Clear(SystemColors::Info);
 	}
 	private: System::Void bHandle_Click(System::Object^ sender, System::EventArgs^ e)
 	{
-		strategy->handle();
+		auto input = tbSource->Lines;
+		auto inputList = splitInput(input);
+
+		if (inputList->Count < 2 || input->Length && input[0] == "Введите слова")
+			MessageBox::Show("Введите хотя бы два слова!");
+		else
+		{
+			String^ alert = "Ждите. Идет построение кроссворда...";
+			auto easel = panel1->CreateGraphics();
+			auto font = gcnew Drawing::Font("Calibri", 15.0f);
+			easel->DrawString(alert, font, Brushes::Gray, 10.0f, 10.0f);
+			panel1->Update();
+
+			auto task = gcnew intListDelegate(this, &MainForm::handleDelegate);
+			auto callback = gcnew AsyncCallback(this, &MainForm::handleCallback);
+			task->BeginInvoke(inputList, callback, task);
+		}
 	}
 	private: System::Void bCutWords_Click(System::Object^ sender, System::EventArgs^ e)
 	{
-		strategy->next();
+		numericUpDown1_ValueChanged(sender, EventArgs::Empty);
 	}
-
 	private: System::Void numericUpDown1_ValueChanged(System::Object^ sender, System::EventArgs^ e)
 	{
-		strategy->next();
+		if (bDealer->StatesCount > 0)
+		{
+			auto stateNo = Convert::ToInt32(numericUpDown1->Value) - 1;
+			bDealer->setCurrentBoard(stateNo);
+
+			vhTextBoxesFill();
+
+			auto easel = panel1->CreateGraphics();
+			bDealer->DrawBoard(easel, bCutWords->Checked, false);
+		}
+	}
+	private: System::Void loadToolStripButton_Click(System::Object^ sender, System::EventArgs^ e)
+	{
+		создатьToolStripButton_Click(sender, EventArgs::Empty);
+		
+		auto fod = gcnew OpenFileDialog();
+		fod->Filter = "Text files(*.txt)|*.txt";
+		fod->InitialDirectory = Environment::CurrentDirectory;
+
+		if (fod->ShowDialog() == System::Windows::Forms::DialogResult::OK)
+		{
+			auto filename = fod->FileName;
+			tbSource->Lines = File::ReadAllLines(filename);
+			tbSource->ForeColor = Color::Black;
+			tbSource->Focus();
+		}
 	}
 	private: System::Void печатьToolStripButton_Click(System::Object^ sender, System::EventArgs^ e)
 	{
-		strategy->preview();
-	}
-	private: System::Void bConsole_Click(System::Object^ sender, System::EventArgs^ e)
-	{
-		strategy->consolePreview();
+		if (bDealer->StatesCount > 0)
+			bDealer->PreviewBoard(bCutWords->Checked);
+		else
+			MessageBox::Show("Составьте кроссворд!", "Application");
 	}
 	private: System::Void справкаToolStripButton_Click(System::Object^ sender, System::EventArgs^ e)
 	{
-		strategy->about();
+		MessageBox::Show("Разработчик:\nСтудент группы ЗЭУ-271\nГригорий Долгий ©\n2020", "О программе");
 	}
 	private: System::Void создатьToolStripButton_Click(System::Object^ sender, System::EventArgs^ e)
 	{
-		strategy->newOne();
-	}
+		bDealer->reset();
 
+		// динамическое изменение компонентов формы
+		tabControl1->SelectedIndex = 0;
+		tbVertical->Text = "";
+		tbHorizontal->Text = "";
+		tbCountStates->Text = "0";
+		tbNotFitted->Text = "0";
+		bCutWords->Checked = false;
+		bCutWords->Enabled = false;
+		numericUpDown1->Minimum = 0;
+		numericUpDown1->Maximum = 0;
+
+		auto easel = panel1->CreateGraphics();
+		easel->Clear(SystemColors::Info);
+
+		if (tbSource->GetType() == TextBox::typeid)
+		{
+			tbSource->ForeColor = SystemColors::ButtonShadow;
+			tbSource->Lines = gcnew array<String^>{ "Введите слова", "через пробел", "или с новых строк" };
+		}
+
+		panel1->Focus();
+	}
 	private: System::Void panel1_Paint(System::Object^ sender, System::Windows::Forms::PaintEventArgs^ e)
 	{
-		strategy->next();
+		numericUpDown1_ValueChanged(sender, EventArgs::Empty);
 	}
+
+
+	// Auxiliaries
+	private: List<String^>^ splitInput(Array^ arr)
+	{
+		auto list = gcnew List<String^>();
+		for each (String ^ item in arr)
+		{
+			auto split = item->Split(' ');
+			for each (auto % one in split)
+				if (one->Length > 0)
+					list->Add(one);
+		}
+
+		return list;
+	}
+	private: int handleDelegate(List<String^>^ source)
+	{
+		watch = Stopwatch::StartNew();
+		bDealer->handle(source);
+		watch->Stop();
+		return (int)(watch->ElapsedMilliseconds);
+	}
+	private: void handleCallback(IAsyncResult^ result)
+	{
+		auto del = (intListDelegate^)result->AsyncState;
+		int time = del->EndInvoke(result);
+
+		String^ statusString = String::Format(L"Расчет выполнен за {0} ms", time);
+
+		auto i = gcnew Action<String^>(this, &MainForm::invoke);
+		Invoke(i, statusString);
+	}
+	private: void invoke(String^ statusString)
+	{
+		if (bDealer->StatesCount > 0)
+		{
+			bCutWords->Enabled = true;
+			numericUpDown1->Minimum = 1;
+			numericUpDown1->Maximum = bDealer->StatesCount;
+			numericUpDown1->Value = 1;
+			tbCountStates->Text = bDealer->StatesCount.ToString();
+
+			tabControl1->SelectedIndex = 1;
+			numericUpDown1_ValueChanged(this, EventArgs::Empty);
+		}
+
+		if (bDealer->FailsCount > 0)
+		{
+			toolTip->SetToolTip(tbNotFitted, String::Join("\n", bDealer->gimmeFails()));
+			tbNotFitted->Text = bDealer->FailsCount.ToString();
+			return;
+		}
+
+		toolTip->SetToolTip(tbNotFitted, "Нет невошедших слов");
+
+		statusLabel1->Text = statusString;
+	}
+	private: void vhTextBoxesFill()
+	{
+		auto vWords = bDealer->gimmeVWords();
+		auto hWords = bDealer->gimmeHWords();
+		
+		auto vWordsList = vWords->ToArray();
+		auto hWordsList = hWords->ToArray();
+
+		for (int i = 0; i < vWordsList->Length; ++i)
+			vWordsList[i] = (i + 1).ToString() + ". " + vWordsList[i];
+
+		for (int i = 0; i < hWordsList->Length; ++i)
+			hWordsList[i] = (i + 1).ToString() + ". " + hWordsList[i];
+
+
+		tbVertical->Lines = vWordsList;
+		tbHorizontal->Lines = hWordsList;
+	}
+
 	};
 }

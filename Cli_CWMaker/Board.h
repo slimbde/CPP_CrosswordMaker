@@ -1,119 +1,121 @@
 #pragma once
 #include "Word.h"
-#include "Point.h"
 #include "Cell.h"
 
-using namespace System;
-using namespace System::Collections;
-using namespace System::Text;
 
+using namespace System;
+using namespace System::Drawing;
+using namespace System::Drawing::Printing;
+using namespace System::Windows::Forms;
+using namespace System::Collections::Generic;
 
 
 
 ref class Board
 {
-	int width;						// С€РёСЂРёРЅР° РґРѕСЃРєРё
-	int height;						// РІС‹СЃРѕС‚Р° РґРѕСЃРєРё
-	array<Word^ >^ words;			// СЃРїРёСЃРѕРє СЃР»РѕРІ
-	array<String^, 2>^ board;		// РґРѕСЃРєР° СЃРѕ СЃР»РѕРІР°РјРё
+	Point size;						// размеры
+	List<Word^ >^ words;			// список слов
+	array<String^, 2>^ board;		// доска со словами
+
+	float scale = 20.0f;			// масштаб клетки по умолчанию
+	bool cutWords;					// убрать буквы из клеток
+	bool resetZeroPoint;			// рисовать не с центра а от угла
 
 
 public:
-	property int Width {
-		int get() { return width; }
-	}
-	property int Height {
-		int get() { return height; }
-	}
-	property List<String^>^ vWords {
-		List<String^>^ get()
+	property Point Size { Point get() { return size; } };
+	property List<Word^>^ vWords {
+		List<Word^>^ get()
 		{
-			auto result = gcnew List<String^>();
+			auto result = gcnew List<Word^>();
 
 			for each (auto % item in words)
 			{
-				if (item->lyt == "Vertical")
-					result->Add(item->word);
+				if (item->Direction == Directions::Vertical)
+					result->Add(item);
 			}
 
 			return result;
 		}
 	}
-	property List<String^>^ hWords {
-		List<String^>^ get()
+	property List<Word^>^ hWords {
+		List<Word^>^ get()
 		{
-			auto result = gcnew List<String^>();
+			auto result = gcnew List<Word^>();
 
 			for each (auto % item in words)
 			{
-				if (item->lyt == "Horizontal")
-					result->Add(item->word);
+				if (item->Direction == Directions::Horizontal)
+					result->Add(item);
 			}
 
 			return result;
 		}
 	}
-	property array<Word^>^ Words {
-		array<Word^>^ get() { return words; }
+	property List<Word^>^ Words {
+		List<Word^>^ get() { return words; }
 	}
-	property array<String^, 2>^ Brd {array<String^, 2>^ get() { return board; } }
+	property bool CutWords { bool get() { return cutWords; } void set(bool value) { cutWords = value; } }
+	property bool ResetZeroPoint { bool get() { return resetZeroPoint; } void set(bool value) { resetZeroPoint = value; } }
 
-	virtual ~Board();
-	Board(int height, int width);
+	Board(Point size);
 
-	Generic::Stack<Board^ >^ Alter(String^ wrd);
+	Generic::Stack<Board^ >^ Append(String^ word);
+	array<String^, 2>^ GetRawBoard() { return board; }
+	void GetDrawn(Graphics^% easel);
+	void Preview();
+
 
 private:
 	bool IsEmpty();
-	String^ GetChar(CWM::Point^ pt);
+	String^ GetChar(Point pt);
 	void CollectWord(Word^ wrd);
-	void IncreaseLeft(Board^% brd, int offset);
-	void IncreaseRight(Board^% brd, int offset);
-	void IncreaseTop(Board^% brd, int offset);
-	void IncreaseBottom(Board^% brd, int offset);
-	bool CheckVerticalNeighbors(CWM::Point^ crossPoint, CWM::Point^ beforePoint, CWM::Point^ nextToPoint);
-	bool CheckHorizontalNeighbors(CWM::Point^ crossPoint, CWM::Point^ beforePoint, CWM::Point^ nextToPoint);
-	Generic::Stack<Board^ >^ InsertHorizontally(String^ wrd);
-	Generic::Stack<Board^ >^ InsertVertically(String^ wrd);
+	Board^ IncreaseLeft(Board^ brd, int offset);
+	Board^ IncreaseRight(Board^ brd, int offset);
+	Board^ IncreaseTop(Board^ brd, int offset);
+	Board^ IncreaseBottom(Board^ brd, int offset);
+	bool CheckVerticalNeighbors(Point crossPoint, Point beforePoint, Point nextToPoint);
+	bool CheckHorizontalNeighbors(Point crossPoint, Point beforePoint, Point nextToPoint);
+	Generic::Stack<Board^ >^ InsertHorizontally(String^ word);
+	Generic::Stack<Board^ >^ InsertVertically(String^ word);
+	void drawCell(Cell^ cell, Graphics^% easel);
+	void onPrintPage(Object^ sender, PrintPageEventArgs^ e);
 };
 
 
 
 
-inline Board::~Board()
-{ }
-inline Board::Board(int height, int width)
+inline Board::Board(Point size)
 {
-	this->width = width;
-	this->height = height;
-	board = gcnew array<String^, 2>(height, width);
+	this->size = size;
+	board = gcnew array<String^, 2>(size.X, size.Y);
 }
 
-inline Generic::Stack<Board^ >^ Board::Alter(String^ wrd)
+inline Generic::Stack<Board^ >^ Board::Append(String^ wrd)
 {
-	// РµСЃР»Рё РґРѕСЃРєР° РїСѓСЃС‚Р°, РґРѕР±Р°РІРёРј РїРµСЂРІРѕРµ СЃР»РѕРІРѕ
+	// если доска пуста, добавим первое слово
 	if (IsEmpty())
 	{
-		// РїРёС€РµРј РЅРѕРјРµСЂ СЃР»РѕРІРѕ РІ РЅСѓР»РµРІРѕР№ СЃС‚РѕР»Р±РµС†
-		for (int i = 0; i < height; ++i)
-			board[i, 0] = wrd[i].ToString();
+		// пишем номер слово в нулевой столбец
+		for (int i = 0; i < size.Y; ++i)
+			board[0, i] = wrd[i].ToString();
 
-		// РґРѕР±Р°РІР»СЏРµРј СЃР»РѕРІРѕ РІ СЃРїРёСЃРѕРє СЃР»РѕРІ
-		CollectWord(gcnew Word(wrd, CWM::Layout::Vertical, 0, 0));
+		// добавляем слово в список слов
+		CollectWord(gcnew Word(wrd, Directions::Vertical, Point(0, 0)));
 
-		// СЃРѕР·РґР°РµРј РІСЂРµРјРµРЅРЅС‹Р№ СЃС‚РµРє РґР»СЏ СЂРµР·СѓР»СЊС‚Р°С‚Р°
+		// создаем временный стек для результата
 		auto result = gcnew Generic::Stack<Board^ >();
 		result->Push(this);
 
 		return result;
 	}
-	else // РµСЃР»Рё РґРѕСЃРєР° РЅРµ РїСѓСЃС‚Р°
+	else // если доска не пуста
 	{
-		// РїСЂРѕР±СѓРµРј РІРїРёСЃР°С‚СЊ СЃР»РѕРІРѕ РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅРѕ Рё РІРµСЂС‚РёРєР°Р»СЊРЅРѕ
+		// пробуем вписать слово горизонтально и вертикально
 		auto result = InsertHorizontally(wrd);
 		auto extraResult = InsertVertically(wrd);
 
-		// РґРѕРїРѕР»РЅСЏРµРј СЃС‚РµРє СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РІСЃС‚Р°РІРєРё РІРµСЂС‚РёРєР°Р»СЊРЅРѕ
+		// дополняем стек результатов вставки вертикально
 		while (extraResult->Count)
 			result->Push(extraResult->Pop());
 
@@ -129,11 +131,11 @@ inline bool Board::IsEmpty()
 			return false;
 	return true;
 }
-inline String^ Board::GetChar(CWM::Point^ pt)
+inline String^ Board::GetChar(Point pt)
 {
 	try
 	{
-		return board[pt->top, pt->left];
+		return board[pt.X, pt.Y];
 	}
 	catch (Exception^)
 	{
@@ -143,121 +145,123 @@ inline String^ Board::GetChar(CWM::Point^ pt)
 inline void Board::CollectWord(Word^ wrd)
 {
 	if (words == nullptr)
-		words = gcnew array<Word^>(1) { wrd };
-	else
-	{
-		array<Word^ >^ result = gcnew array<Word^ >(words->Length + 1);
-		words->CopyTo(result, 0);
-		result[words->Length] = wrd;
-		words = result;
-	}
+		words = gcnew List<Word^>();
+
+	words->Add(wrd);
 }
-inline void Board::IncreaseLeft(Board^% brd, int offset)
+inline Board^ Board::IncreaseLeft(Board^ brd, int offset)
 {
-	// РЅРѕРІР°СЏ С€РёСЂРёРЅР° С€РёСЂРµ РЅР° offset
-	int newWidth = brd->width + offset;
-	Board^ temp = gcnew Board(brd->height, newWidth);
+	// новая ширина шире на offset
+	int newWidth = brd->Size.X + offset;
+	Board^ temp = gcnew Board(Point(newWidth, brd->Size.Y));
 
-	// РїРµСЂРµРїРёС€РµРј РІСЃРµ Р±СѓРєРІС‹ РЅР° РґРѕСЃРєРµ РЅР° РЅРѕРІС‹Рµ (СЃРѕ СЃРјРµС‰РµРЅРёРµРј) РїРѕР·РёС†РёРё
-	for (int i = 0; i < brd->height; ++i)
-		for (int j = 0; j < brd->width; ++j)
-			temp->board[i, j + offset] = brd->board[i, j];
+	// перепишем все буквы на доске на новые (со смещением) позиции
+	for (int i = 0; i < brd->Size.X; ++i)
+		for (int j = 0; j < brd->Size.Y; ++j)
+			temp->board[i + offset, j] = gcnew String(brd->board[i, j]);
 
-	// СЃРєРѕРїРёСЂСѓРµРј РјР°СЃСЃРёРІ СЃР»РѕРІ РёР·РјРµРЅСЏСЏ РёС… РєРѕРѕСЂРґРёРЅР°С‚С‹ left
-	temp->words = gcnew array<Word^ >(brd->words->Length);
-	brd->words->CopyTo(temp->words, 0);
+	// скопируем массив слов изменяя их координаты left
+	temp->words = gcnew List<Word^>();
+	for each (Word ^ word in brd->words)
+		temp->words->Add(gcnew Word(word));
+
+
 	for each (Word ^ item in temp->words)
-		item->left += offset;
+		item->Location.X += offset;
 
-	brd = temp;
+	return temp;
 }
-inline void Board::IncreaseRight(Board^% brd, int offset)
+inline Board^ Board::IncreaseRight(Board^ brd, int offset)
 {
-	// РЅРѕРІР°СЏ С€РёСЂРёРЅР° С€РёСЂРµ РЅР° offset
-	int newWidth = brd->width + offset;
-	Board^ temp = gcnew Board(brd->height, newWidth);
+	// новая ширина шире на offset
+	int newWidth = brd->Size.X + offset;
+	Board^ temp = gcnew Board(Point(newWidth, brd->Size.Y));
 
-	// РїРµСЂРµРїРёС€РµРј РІСЃРµ Р±СѓРєРІС‹ РЅР° РґРѕСЃРєРµ РЅР° РїСЂРµР¶РЅРёРµ (Р±РµР· СЃРјРµС‰РµРЅРёСЏ) РїРѕР·РёС†РёРё
-	for (int i = 0; i < brd->height; ++i)
-		for (int j = 0; j < brd->width; ++j)
-			temp->board[i, j] = brd->board[i, j];
+	// перепишем все буквы на доске на прежние (без смещения) позиции
+	for (int i = 0; i < brd->Size.X; ++i)
+		for (int j = 0; j < brd->Size.Y; ++j)
+			temp->board[i, j] = gcnew String(brd->board[i, j]);
 
-	// СЃРєРѕРїРёСЂСѓРµРј РјР°СЃСЃРёРІ СЃР»РѕРІ Р±РµР· РёР·РјРµРЅРµРЅРёСЏ РёС… РєРѕРѕСЂРґРёРЅР°С‚С‹ left
-	temp->words = gcnew array<Word^ >(brd->words->Length);
-	brd->words->CopyTo(temp->words, 0);
+	// скопируем массив слов без изменения их координаты left
+	temp->words = gcnew List<Word^>();
+	for each (Word ^ word in brd->words)
+		temp->words->Add(gcnew Word(word));
 
-	brd = temp;
+	return temp;
 }
-inline void Board::IncreaseTop(Board^% brd, int offset)
+inline Board^ Board::IncreaseTop(Board^ brd, int offset)
 {
-	// РЅРѕРІР°СЏ РІС‹СЃРѕС‚Р° Р±РѕР»СЊС€Рµ РЅР° offset
-	int newHeight = brd->height + offset;
-	Board^ temp = gcnew Board(newHeight, brd->width);
+	// новая высота больше на offset
+	int newHeight = brd->Size.Y + offset;
+	Board^ temp = gcnew Board(Point(brd->Size.X, newHeight));
 
-	// РїРµСЂРµРїРёС€РµРј РІСЃРµ Р±СѓРєРІС‹ РЅР° РґРѕСЃРєРµ РЅР° РЅРѕРІС‹Рµ (СЃРѕ СЃРјРµС‰РµРЅРёРµРј) РїРѕР·РёС†РёРё
-	for (int i = 0; i < brd->height; ++i)
-		for (int j = 0; j < brd->width; ++j)
-			temp->board[i + offset, j] = brd->board[i, j];
+	// перепишем все буквы на доске на новые (со смещением) позиции
+	for (int i = 0; i < brd->Size.X; ++i)
+		for (int j = 0; j < brd->Size.Y; ++j)
+			temp->board[i, j + offset] = gcnew String(brd->board[i, j]);
 
-	// СЃРєРѕРїРёСЂСѓРµРј РјР°СЃСЃРёРІ СЃР»РѕРІ РёР·РјРµРЅСЏСЏ РёС… РєРѕРѕСЂРґРёРЅР°С‚С‹ top
-	temp->words = gcnew array<Word^ >(brd->words->Length);
-	brd->words->CopyTo(temp->words, 0);
+	// скопируем массив слов изменяя их координаты top
+	temp->words = gcnew List<Word^ >();
+	for each (Word ^ word in brd->words)
+		temp->words->Add(gcnew Word(word));
+
 	for each (Word ^ item in temp->words)
-		item->top += offset;
+		item->Location.Y += offset;
 
-	brd = temp;
+	return temp;
 }
-inline void Board::IncreaseBottom(Board^% brd, int offset)
+inline Board^ Board::IncreaseBottom(Board^ brd, int offset)
 {
-	// РЅРѕРІР°СЏ РІС‹СЃРѕС‚Р° Р±РѕР»СЊС€Рµ РЅР° offset
-	int newHeight = brd->height + offset;
-	Board^ temp = gcnew Board(newHeight, brd->width);
+	// новая высота больше на offset
+	int newHeight = brd->Size.Y + offset;
+	Board^ temp = gcnew Board(Point(brd->Size.X, newHeight));
 
-	// РїРµСЂРµРїРёС€РµРј РІСЃРµ Р±СѓРєРІС‹ РЅР° РґРѕСЃРєРµ РЅР° РїСЂРµР¶РЅРёРµ (Р±РµР· СЃРјРµС‰РµРЅРёСЏ) РїРѕР·РёС†РёРё
-	for (int i = 0; i < brd->height; ++i)
-		for (int j = 0; j < brd->width; ++j)
-			temp->board[i, j] = brd->board[i, j];
+	// перепишем все буквы на доске на прежние (без смещения) позиции
+	for (int i = 0; i < brd->Size.X; ++i)
+		for (int j = 0; j < brd->Size.Y; ++j)
+			temp->board[i, j] = gcnew String(brd->board[i, j]);
 
-	// СЃРєРѕРїРёСЂСѓРµРј РјР°СЃСЃРёРІ СЃР»РѕРІ Р±РµР· РёР·РјРµРЅРµРЅРёСЏ РёС… РєРѕРѕСЂРґРёРЅР°С‚С‹ top
-	temp->words = gcnew array<Word^ >(brd->words->Length);
-	brd->words->CopyTo(temp->words, 0);
+	// скопируем массив слов без изменения их координаты top
+	temp->words = gcnew List<Word^ >();
+	for each (Word ^ word in brd->words)
+		temp->words->Add(gcnew Word(word));
 
-	brd = temp;
+	return temp;
 }
-inline bool Board::CheckVerticalNeighbors(CWM::Point^ crossPoint, CWM::Point^ beforePoint, CWM::Point^ nextToPoint)
+inline bool Board::CheckVerticalNeighbors(Point crossPoint, Point beforePoint, Point nextToPoint)
 {
 		// * * * * * * * * * * * * *
 		// *|#|#|#|#|#|#|#|#|#|#|#|*
 		// * * * * * * * * * * * * *
 
-	// РїСЂРѕРІРµСЂСЏРµРј РїРѕ С‚СЂРё С‚РѕС‡РєРё РѕС‚ РєРѕРѕСЂРґРёРЅР°С‚ РЅР°С‡Р°Р»Р° СЃР»РѕРІР° РґРѕ РєРѕРѕСЂРґРёРЅР°С‚ РєРѕРЅС†Р°
-	for (int left = beforePoint->left; left <= nextToPoint->left; ++left)
+	// проверяем по три точки от координат начала слова до координат конца
+	for (int x = beforePoint.X; x <= nextToPoint.X; ++x)
 	{
-		// РїСЂРѕРІРµСЂРёРј РїРѕ 3 РІРµСЂС‚РёРєР°Р»СЊРЅС‹С… С‚РѕС‡РєРё РїРѕ РІСЃРµР№ РґР»РёРЅРµ СЃР»РѕРІР° РєСЂРѕРјРµ РїРµСЂРµСЃРµС‡РµРЅРёСЏ
-		for (int top = beforePoint->top - 1; top <= beforePoint->top + 1; ++top)
+		// проверим по 3 вертикальных точки по всей длине слова кроме пересечения
+		for (int y = beforePoint.Y - 1; y <= beforePoint.Y + 1; ++y)
 		{
-			if (left == crossPoint->left)
-				continue;
+			if (x == crossPoint.X)
+				break;
 
-			if (GetChar(gcnew CWM::Point(top, left)) != nullptr)
+			if (GetChar(Point(x, y)) != nullptr)
 				return false;
 		}
 	}
 
 	return true;
 }
-inline bool Board::CheckHorizontalNeighbors(CWM::Point^ crossPoint, CWM::Point^ beforePoint, CWM::Point^ nextToPoint)
+inline bool Board::CheckHorizontalNeighbors(Point crossPoint, Point beforePoint, Point nextToPoint)
 {
-	// РїСЂРѕРІРµСЂСЏРµРј РїРѕ С‚СЂРё С‚РѕС‡РєРё РѕС‚ РєРѕРѕСЂРґРёРЅР°С‚ РЅР°С‡Р°Р»Р° СЃР»РѕРІР° РґРѕ РєРѕРѕСЂРґРёРЅР°С‚ РєРѕРЅС†Р°
-	for (int top = beforePoint->top; top <= nextToPoint->top; ++top)
+	// проверяем по три точки от координат начала слова до координат конца
+	for (int y = beforePoint.Y; y <= nextToPoint.Y; ++y)
 	{
-		// РїСЂРѕРІРµСЂРёРј РїРѕ 3 РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅС‹С… С‚РѕС‡РєРё РїРѕ РІСЃРµР№ РґР»РёРЅРµ СЃР»РѕРІР° РєСЂРѕРјРµ РїРµСЂРµСЃРµС‡РµРЅРёСЏ
-		for (int left = beforePoint->left - 1; left <= beforePoint->left + 1; ++left)
+		// проверим по 3 горизонтальных точки по всей длине слова кроме пересечения
+		for (int x = beforePoint.X - 1; x <= beforePoint.X + 1; ++x)
 		{
-			if (top == crossPoint->top)
-				continue;
+			if (y == crossPoint.Y)
+				break;
 
-			if (GetChar(gcnew CWM::Point(top, left)) != nullptr)
+			if (GetChar(Point(x, y)) != nullptr)
 				return false;
 		}
 	}
@@ -266,84 +270,83 @@ inline bool Board::CheckHorizontalNeighbors(CWM::Point^ crossPoint, CWM::Point^ 
 }
 inline Generic::Stack<Board^ >^ Board::InsertHorizontally(String^ wrd)
 {
-		// СЃРѕР·РґР°РµРј РІСЂРµРјРµРЅРЅС‹Р№ СЃС‚РµРє РґР»СЏ СЂРµР·СѓР»СЊС‚Р°С‚Р°
+	// создаем временный стек для результата
 	Generic::Stack<Board^ >^ result = gcnew Generic::Stack<Board^ >();
 
-	// РёРґРµРј РїРѕ РІСЃРµРј РІРµСЂС‚РёРєР°Р»СЊРЅС‹Рј СЃР»РѕРІР°Рј
+	// идем по всем вертикальным словам
 	for each (Word ^ currentWord in words)
 	{
-		if (currentWord->layout == CWM::Layout::Vertical)
+		if (currentWord->Direction == Directions::Vertical)
 		{
-			// СЂРµР·РµСЂРІРёСЂСѓРµРј СЃРґРІРёРі СЃР»РѕРІР° РІР»РµРІРѕ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ РјРµСЃС‚Р° СЃРєСЂРµС‰РёРІР°РЅРёСЏ
+			// резервируем сдвиг слова влево относительно места скрещивания
 			int offset;
 
-			// РїС‹С‚Р°РµРјСЃСЏ РїСЂРѕРІРµСЂРёС‚СЊ РІРїРёС€РµС‚СЃСЏ Р»Рё СЃР»РѕРІРѕ Рє С‚РµРєСѓС‰РµРјСѓ
-			// С†РёРєР» РїРѕ РІС‹СЃРѕС‚Рµ, i - РёС‚РµСЂР°С‚РѕСЂ РїРѕ РєРѕРѕСЂРґРёРЅР°С‚Р°Рј СЃР»РѕРІР°
-			for (int i = currentWord->top; i < currentWord->top + currentWord->length; ++i)
+			// пытаемся проверить впишется ли слово к текущему
+			// цикл по высоте, i - итератор по координатам слова
+			for (int i = currentWord->Location.Y; i < currentWord->Location.Y + currentWord->Text->Length; ++i)
 			{
 				bool InsertPossible = true;
 
-				// РїС‹С‚Р°РµРјСЃСЏ РЅР°Р№С‚Рё РѕР±С‰СѓСЋ Р±СѓРєРІСѓ РїРµСЂРµСЃРµС‡РµРЅРёСЏ
-				String^ mutualLetter = GetChar(gcnew CWM::Point(i, currentWord->left));
+				// пытаемся найти общую букву пересечения
+				String^ mutualLetter = GetChar(Point(currentWord->Location.X, i));
 
-				// РїРѕР»СѓС‡Р°РµРј СЃРјРµС‰РµРЅРёРµ СЌС‚РѕРіРѕ СЃР»РѕРІР° РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ Р±СѓРєРІС‹
+				// получаем смещение этого слова относительно буквы
 				offset = wrd->IndexOf(mutualLetter);
 
 				if (offset != -1)
 				{
 					// 
-					CWM::Point^ beforeBegin = gcnew CWM::Point(i, currentWord->left - offset - 1);
-					CWM::Point^ nextToEnd = gcnew CWM::Point(i, currentWord->left - offset + wrd->Length + 1);
-					CWM::Point^ crossPoint = gcnew CWM::Point(i, currentWord->left);
+					Point beforeBegin = Point(currentWord->Location.X - offset - 1, i);
+					Point nextToEnd = Point(currentWord->Location.X - offset + wrd->Length, i);
+					Point crossPoint = Point(currentWord->Location.X, i);
 
-					// РїСЂРѕРІРµСЂСЏРµРј СЃРѕСЃРµРґРµР№ С‚РµРєСѓС‰РµР№ Р±СѓРєРІС‹
+					// проверяем соседей текущей буквы
 					if (!CheckVerticalNeighbors(crossPoint, beforeBegin, nextToEnd))
 						InsertPossible = false;
 				}
 				else
 					InsertPossible = false;
 
-				// РµСЃР»Рё InsertPossible РІСЃРµ РµС‰Рµ true РІРїРёСЃС‹РІР°РµРј СЃР»РѕРІРѕ
+				// если InsertPossible все еще true вписываем слово
 				if (InsertPossible)
 				{
-					// С‡С‚РѕР±С‹ РЅРµ Р·Р°РїРѕСЂС‚РёС‚СЊ СЌРєР·РµРјРїР»СЏСЂ РґР»СЏ СЃР»РµРґСѓСЋС‰РёС… РёС‚РµСЂР°С†РёР№, СЃРєРѕРїРёСЂСѓРµРј РµРіРѕ
-					Board^ temp = gcnew Board(height, width);
+					// чтобы не запортить экземпляр для следующих итераций, скопируем его
+					Board^ temp = gcnew Board(size);
 
-					for (int i = 0; i < height; ++i)
-						for (int j = 0; j < width; ++j)
+					for (int i = 0; i < size.X; ++i)
+						for (int j = 0; j < size.Y; ++j)
 							temp->board[i, j] = board[i, j];
 
-					temp->words = gcnew array<Word^ >(words->Length);
-					for (int i = 0; i < words->Length; ++i)
-						temp->words[i] = gcnew Word(words[i]);
+					temp->words = gcnew List<Word^ >();
+					for each (Word ^ word in words)
+						temp->words->Add(gcnew Word(word));
 
-					// Р°Р±СЃРѕР»СЋС‚РЅР°СЏ РєРѕРѕСЂРґРёРЅР°С‚Р° РЅР°С‡Р°Р»Р° РЅРѕРІРѕРіРѕ СЃР»РѕРІР°
-					int absLeft = currentWord->left - offset;
-					// РµСЃР»Рё РѕРЅР° РѕС‚СЂРёС†Р°С‚РµР»СЊРЅР°
+					// абсолютная координата начала нового слова
+					int absLeft = currentWord->Location.X - offset;
+					// если она отрицательна
 					if (absLeft < 0)
 					{
-						// РґРѕР±Р°РІР»СЏРµРј СЃС‚РѕР»Р±С†С‹ СЃР»РµРІР°
-						IncreaseLeft(temp, Math::Abs(absLeft));
-						// С‚РµРїРµСЂСЊ СЌС‚Р° Р°Р±СЃРѕР»СЋС‚РЅР°СЏ РєРѕРѕСЂРґРёРЅР°С‚Р° РІ РЅР°С‡Р°Р»Рµ РґРѕСЃРєРё
+						// добавляем столбцы слева
+						temp = IncreaseLeft(temp, Math::Abs(absLeft));
 						absLeft = 0;
 					}
 
-					// Р°Р±СЃРѕР»СЋС‚РЅР°СЏ РєРѕРѕСЂРґРёРЅР°С‚Р° РєРѕРЅС†Р° РЅРѕРІРѕРіРѕ СЃР»РѕРІР°
+					// абсолютная координата конца нового слова
 					int rightDeviation = absLeft + wrd->Length;
-					// РµСЃР»Рё РѕРЅР° Р·Р° РїСЂР°РІРѕР№ РіСЂР°РЅРёС†РµР№ РїРѕР»СЏ
-					if (rightDeviation > width)
-						// РґРІРёРіР°РµРј РґРѕСЃРєСѓ РІР»РµРІРѕ (Р°Р±СЃРѕР»СЋС‚РЅР°СЏ РєРѕРѕСЂРґРёРЅР°С‚Р° РЅРµ РёР·РјРµРЅРёС‚СЃСЏ)
-						IncreaseRight(temp, rightDeviation - width);
 
-					// Р·Р°РїРёС€РµРј РЅРѕРІРѕРµ СЃР»РѕРІРѕ РЅР°С‡РёРЅР°СЏ СЃ СЌС‚РѕР№ РєРѕРѕСЂРґРёРЅР°С‚С‹ РЅР° РґРѕСЃРєСѓ
+					// если она за правой границей поля
+					if (rightDeviation > size.X)
+						temp = IncreaseRight(temp, rightDeviation - size.X);
+
+					// запишем новое слово начиная с этой координаты на доску
 					for (int k = absLeft, j = 0; k < absLeft + wrd->Length; ++k)
-						temp->board[i, k] = wrd[j++].ToString();
+						temp->board[k, i] = wrd[j++].ToString();
 
-					// РґРѕР±Р°РІРёРј СЌС‚Рѕ СЃР»РѕРІРѕ Рє СЃР»РѕРІР°Рј
-					Word^ newWord = gcnew Word(wrd, CWM::Layout::Horizontal, i, absLeft);
+					// добавим это слово к словам
+					Word^ newWord = gcnew Word(wrd, Directions::Horizontal, Point(absLeft, i));
 					temp->CollectWord(newWord);
 
-					// СЃРѕС…СЂР°РЅСЏРµРј СЌС‚Сѓ РґРѕСЃРєСѓ РІ СЃС‚РµРє
+					// сохраняем эту доску в стек
 					result->Push(temp);
 				}
 			}
@@ -354,83 +357,85 @@ inline Generic::Stack<Board^ >^ Board::InsertHorizontally(String^ wrd)
 }
 inline Generic::Stack<Board^ >^ Board::InsertVertically(String^ wrd)
 {
-		// СЃРѕР·РґР°РµРј РІСЂРµРјРµРЅРЅС‹Р№ СЃС‚РµРє РґР»СЏ СЂРµР·СѓР»СЊС‚Р°С‚Р°
+	// создаем временный стек для результата
 	Generic::Stack<Board^ >^ result = gcnew Generic::Stack<Board^ >();
 
-	// РёРґРµРј РїРѕ РІСЃРµРј С‡РµС‚РЅС‹Рј СЃР»РѕРІР°Рј (РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅС‹Рј) СЃР»РѕРІР°Рј
+	// идем по всем четным словам (горизонтальным) словам
 	for each (Word ^ currentWord in words)
 	{
-		if (currentWord->layout == CWM::Layout::Horizontal)
+		if (currentWord->Direction == Directions::Horizontal)
 		{
-			// РїС‹С‚Р°РµРјСЃСЏ РїСЂРѕРІРµСЂРёС‚СЊ РІРїРёС€РµС‚СЃСЏ Р»Рё СЃР»РѕРІРѕ Рє С‚РµРєСѓС‰РµРјСѓ
-			// С†РёРєР» РїРѕ С€РёСЂРёРЅРµ, i - РёС‚РµСЂР°С‚РѕСЂ РїРѕ РєРѕРѕСЂРґРёРЅР°С‚Р°Рј СЃР»РѕРІР°
-			for (int i = currentWord->left; i < currentWord->left + currentWord->length; ++i)
+			// пытаемся проверить впишется ли слово к текущему
+			// цикл по ширине, i - итератор по координатам слова
+			for (int i = currentWord->Location.X; i < currentWord->Location.X + currentWord->Text->Length; ++i)
 			{
 				bool InsertPossible = true;
 
-				// СЂРµР·РµСЂРІРёСЂСѓРµРј СЃРґРІРёРі СЃР»РѕРІР° РІРІРµСЂС… РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ РјРµСЃС‚Р° СЃРєСЂРµС‰РёРІР°РЅРёСЏ
+				if (wrd == "Крыльце")
+					i = i;
+
+				// резервируем сдвиг слова вверх относительно места скрещивания
 				int offset;
 
-				// РїС‹С‚Р°РµРјСЃСЏ РЅР°Р№С‚Рё РѕР±С‰СѓСЋ Р±СѓРєРІСѓ РїРµСЂРµСЃРµС‡РµРЅРёСЏ
-				String^ mutualLetter = GetChar(gcnew CWM::Point(currentWord->top, i));
+				// пытаемся найти общую букву пересечения
+				String^ mutualLetter = GetChar(Point(i, currentWord->Location.Y));
 
-				// РїРѕР»СѓС‡Р°РµРј СЃРјРµС‰РµРЅРёРµ СЌС‚РѕРіРѕ СЃР»РѕРІР° РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ Р±СѓРєРІС‹
+				// получаем смещение этого слова относительно буквы
 				offset = wrd->IndexOf(mutualLetter);
 
 				if (offset != -1)
 				{
-					CWM::Point^ beforeBegin = gcnew CWM::Point(currentWord->top - offset - 1, i);
-					CWM::Point^ nextToEnd = gcnew CWM::Point(currentWord->top - offset + wrd->Length + 1, i);
-					CWM::Point^ crossPoint = gcnew CWM::Point(currentWord->top, i);
+					Point beforeBegin = Point(i, currentWord->Location.Y - offset - 1);
+					Point nextToEnd = Point(i, currentWord->Location.Y - offset + wrd->Length);
+					Point crossPoint = Point(i, currentWord->Location.Y);
 
-					// РїСЂРѕРІРµСЂСЏРµРј СЃРѕСЃРµРґРµР№ С‚РµРєСѓС‰РµР№ Р±СѓРєРІС‹
+					// проверяем соседей текущей буквы
 					if (!CheckHorizontalNeighbors(crossPoint, beforeBegin, nextToEnd))
 						InsertPossible = false;
 				}
 				else
 					InsertPossible = false;
 
-				// РµСЃР»Рё InsertPossible РІСЃРµ РµС‰Рµ true РІРїРёСЃС‹РІР°РµРј СЃР»РѕРІРѕ
+				// если InsertPossible все еще true вписываем слово
 				if (InsertPossible)
 				{
-					// С‡С‚РѕР±С‹ РЅРµ Р·Р°РїРѕСЂС‚РёС‚СЊ СЌРєР·РµРјРїР»СЏСЂ РґР»СЏ СЃР»РµРґСѓСЋС‰РёС… РёС‚РµСЂР°С†РёР№, СЃРєРѕРїРёСЂСѓРµРј РµРіРѕ
-					Board^ temp = gcnew Board(height, width);
+					// чтобы не запортить экземпляр для следующих итераций, скопируем его
+					Board^ temp = gcnew Board(size);
 
-					for (int i = 0; i < height; ++i)
-						for (int j = 0; j < width; ++j)
+					for (int i = 0; i < size.X; ++i)
+						for (int j = 0; j < size.Y; ++j)
 							temp->board[i, j] = board[i, j];
 
-					temp->words = gcnew array<Word^ >(words->Length);
-					for (int i = 0; i < words->Length; ++i)
-						temp->words[i] = gcnew Word(words[i]);
+					temp->words = gcnew List<Word^ >();
+					for each (Word ^ word in words)
+						temp->words->Add(word);
 
-					// Р°Р±СЃРѕР»СЋС‚РЅР°СЏ РєРѕРѕСЂРґРёРЅР°С‚Р° РЅР°С‡Р°Р»Р° РЅРѕРІРѕРіРѕ СЃР»РѕРІР°
-					int absTop = currentWord->top - offset;
-					// РµСЃР»Рё РѕРЅР° РѕС‚СЂРёС†Р°С‚РµР»СЊРЅР°
+					// абсолютная координата начала нового слова
+					int absTop = currentWord->Location.Y - offset;
+					// если она отрицательна
 					if (absTop < 0)
 					{
-						// РґРѕР±Р°РІР»СЏРµРј СЃС‚РѕР»Р±С†С‹ СЃРІРµСЂС…Сѓ
-						IncreaseTop(temp, Math::Abs(absTop));
-						// С‚РµРїРµСЂСЊ СЌС‚Р° Р°Р±СЃРѕР»СЋС‚РЅР°СЏ РєРѕРѕСЂРґРёРЅР°С‚Р° РІ РЅР°С‡Р°Р»Рµ РґРѕСЃРєРё
+						// добавляем столбцы сверху
+						temp = IncreaseTop(temp, Math::Abs(absTop));
 						absTop = 0;
 					}
 
-					// Р°Р±СЃРѕР»СЋС‚РЅР°СЏ РєРѕРѕСЂРґРёРЅР°С‚Р° РєРѕРЅС†Р° РЅРѕРІРѕРіРѕ СЃР»РѕРІР°
+					// абсолютная координата конца нового слова
 					int bottomDeviation = absTop + wrd->Length;
-					// РµСЃР»Рё РѕРЅР° Р·Р° РЅРёР¶РЅРµР№ РіСЂР°РЅРёС†РµР№ РїРѕР»СЏ
-					if (bottomDeviation > temp->height)
-						// РґРІРёРіР°РµРј РґРѕСЃРєСѓ РІР»РµРІРѕ (Р°Р±СЃРѕР»СЋС‚РЅР°СЏ РєРѕРѕСЂРґРёРЅР°С‚Р° РЅРµ РёР·РјРµРЅРёС‚СЃСЏ)
-						IncreaseBottom(temp, bottomDeviation - temp->height);
 
-					// Р·Р°РїРёС€РµРј РЅРѕРІРѕРµ СЃР»РѕРІРѕ РЅР°С‡РёРЅР°СЏ СЃ СЌС‚РѕР№ РєРѕРѕСЂРґРёРЅР°С‚С‹ РЅР° РґРѕСЃРєСѓ
+					// если она за нижней границей поля
+					if (bottomDeviation > size.Y)
+						temp = IncreaseBottom(temp, bottomDeviation - size.Y);
+
+					// запишем новое слово начиная с этой координаты на доску
 					for (int k = absTop, j = 0; k < absTop + wrd->Length; ++k)
-						temp->board[k, i] = wrd[j++].ToString();
+						temp->board[i, k] = wrd[j++].ToString();
 
-					// РґРѕР±Р°РІРёРј СЌС‚Рѕ СЃР»РѕРІРѕ Рє СЃР»РѕРІР°Рј
-					Word^ newWord = gcnew Word(wrd, CWM::Layout::Vertical, absTop, i);
+					// добавим это слово к словам
+					Word^ newWord = gcnew Word(wrd, Directions::Vertical, Point(i, absTop));
 					temp->CollectWord(newWord);
 
-					// СЃРѕС…СЂР°РЅСЏРµРј СЌС‚Сѓ РґРѕСЃРєСѓ РІ СЃС‚РµРє
+					// сохраняем эту доску в стек
 					result->Push(temp);
 				}
 			}
@@ -438,4 +443,138 @@ inline Generic::Stack<Board^ >^ Board::InsertVertically(String^ wrd)
 	}
 
 	return result;
+}
+
+inline void Board::GetDrawn(Graphics^% easel)
+{
+	Cell^ cell;
+
+	easel->Clear(SystemColors::Info);
+
+	if (size.Y * scale < easel->VisibleClipBounds.Height && size.X * scale < easel->VisibleClipBounds.Width)
+	{
+		auto easelHeight = easel->VisibleClipBounds.Height;
+		auto easelWidth = easel->VisibleClipBounds.Width;
+
+		auto zeroTop = (easelHeight - size.Y * scale) / 2.5f;
+		auto zeroLeft = (easelWidth - size.X * scale) / 2;
+
+		if (resetZeroPoint)
+		{
+			zeroTop = 0.0f;
+			zeroLeft = 0.0f;
+		}
+
+		// порядковые номера слов
+		int nVertical = 1;
+		int nHorizontal = 1;
+
+		for each (auto word in words)
+		{
+			List<String^>^ letters = gcnew List<String^>();
+			for each (auto letter in word->Text)
+				letters->Add(letter.ToString());
+
+			for (int i = 0; i < letters->Count; ++i)
+			{
+				float currentVerticalLeft = zeroLeft + word->Location.X * scale;
+				float currentVertiaclTop = zeroTop + word->Location.Y * scale + i * scale;
+				float currentHorizontalLeft = zeroLeft + word->Location.X * scale + i * scale;
+				float currentHorizontalTop = zeroTop + word->Location.Y * scale;
+
+				if (word->Direction == Directions::Horizontal)
+					cell = gcnew Cell(Point((int)currentHorizontalLeft, (int)currentHorizontalTop),
+									  (int)scale,
+									  cutWords ? " " : letters[i]->ToUpper(),
+									  i == 0 ? (nHorizontal++).ToString() : "",
+									  false);
+				else
+					cell = gcnew Cell(Point((int)currentVerticalLeft, (int)currentVertiaclTop),
+									  (int)scale,
+									  cutWords ?
+									  " " : letters[i]->ToUpper(),
+									  i == 0 ? (nVertical++).ToString() : "",
+									  true);
+
+				// отрисовка ячейки
+				drawCell(cell, easel);
+			}
+		}
+	}
+	else
+		easel->DrawString(L"Составленный кроссворд не вмещается в рабочую область.\r\nВоспользуйтесь предпросмотром.",
+						  gcnew Drawing::Font("Calibri", scale / 1.5f, FontStyle::Regular), Brushes::Black, 10, 10);
+}
+inline void Board::Preview()
+{
+	auto wMargin = scale;
+	auto hMargin = scale;
+
+	// ищем длиннейшее горизонтальное слово
+	int maxLength = 0;
+	for each (auto item in hWords)
+		maxLength = maxLength > item->Text->Length ? maxLength : item->Text->Length;
+
+	auto paperWidth = int(size.X * scale + wMargin * 2 + 1 / hWords->Count * scale * 7 + maxLength * scale);
+	auto paperHeight = int(size.Y * scale + hMargin * 2 + 1 / vWords->Count * scale * 4);
+
+	auto print = gcnew PrintDocument();
+
+	print->DefaultPageSettings->PaperSize = gcnew Printing::PaperSize("MySize", paperWidth, paperHeight);
+	print->OriginAtMargins = true;
+	print->DefaultPageSettings->Margins = gcnew Printing::Margins((int)wMargin, (int)wMargin, (int)hMargin, (int)hMargin);
+	print->PrintPage += gcnew PrintPageEventHandler(this, &Board::onPrintPage);
+
+	auto printDialog = gcnew PrintPreviewDialog();
+
+	printDialog->AutoScrollMargin = System::Drawing::Size(0, 0);
+	printDialog->AutoScrollMinSize = System::Drawing::Size(0, 0);
+	printDialog->ClientSize = System::Drawing::Size(400, 300);
+	printDialog->Document = print;
+	printDialog->Enabled = true;
+	printDialog->Visible = false;
+	printDialog->StartPosition = FormStartPosition::CenterParent;
+	printDialog->WindowState = System::Windows::Forms::FormWindowState::Maximized;
+	printDialog->ShowDialog();
+}
+inline void Board::drawCell(Cell^ cell, Graphics^% easel)
+{
+	auto rect = Rectangle(cell->Location.X, cell->Location.Y, cell->CellSize, cell->CellSize);
+	easel->DrawRectangle(Pens::Black, rect);
+	easel->DrawString(cell->Letter, gcnew Font("Calibri", 10.0f), Brushes::Black, float(cell->Location.X + cell->CellSize / 5), float(cell->Location.Y + cell->CellSize / 8));
+
+	if (cell->Vertical)
+		easel->DrawString(cell->Number, gcnew Font("Calibri", 6.0f), Brushes::Maroon, float(cell->Location.X + cell->CellSize) - 7, float(cell->Location.Y) - 1);
+	else
+		easel->DrawString(cell->Number, gcnew Font("Calibri", 6.0f), Brushes::Maroon, float(cell->Location.X) - 1, float(cell->Location.Y) - 1);
+}
+inline void Board::onPrintPage(Object^ sender, PrintPageEventArgs^ e)
+{
+	auto easel = e->Graphics;
+	resetZeroPoint = true;
+	GetDrawn(easel);
+
+	float top = scale;
+	float left = size.X * scale + scale * 2;
+
+	easel->DrawString(L"ПО ГОРИЗОНТАЛИ:", gcnew Drawing::Font("Calibri", scale / 2, FontStyle::Bold), Brushes::Black, left, top);
+	top += scale * 0.75f;
+
+	for (auto i = 0; i < hWords->Count; ++i)
+	{
+		easel->DrawString(i + 1 + ". " + hWords[i]->Text, gcnew Drawing::Font("Calibri", scale / 2), Brushes::Black, left, top);
+		top += scale * 0.6f;
+	}
+
+	top += scale * 0.75f;
+	easel->DrawString(L"ПО ВЕРТИКАЛИ:", gcnew Drawing::Font("Calibri", scale / 2, FontStyle::Bold), Brushes::Black, left, top);
+	top += scale * 0.75f;
+
+	for (auto i = 0; i < vWords->Count; ++i)
+	{
+		easel->DrawString(i + 1 + ". " + vWords[i]->Text, gcnew Drawing::Font("Calibri", scale / 2), Brushes::Black, left, top);
+		top += scale * 0.6f;
+	}
+
+	easel->DrawString(L"©slim 2020", gcnew Drawing::Font("Calibri", scale / 2), Brushes::LightGray, -scale, -scale);
 }
